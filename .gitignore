@@ -32,9 +32,19 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.local.example
 
 # vercel
 .vercel
+
+# sqlite
+sqlite.db
+sqlite.db-shm
+sqlite.db-wal
+
+# stale generated artifacts
+.wrangler/
+.open-next/
 
 # typescript
 *.tsbuildinfo

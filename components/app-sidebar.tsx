@@ -2,9 +2,8 @@
 
 import {
   DashboardSquare01Icon,
-  Analytics01Icon,
-  Settings01Icon,
-  InformationCircleIcon,
+  School01Icon,
+  UserGroupIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
@@ -22,16 +21,29 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 
-const items = [
+const adminItems = [
   { title: "Dashboard", url: "/dashboard", icon: DashboardSquare01Icon },
-  { title: "Analytics", url: "/analytics", icon: Analytics01Icon },
-  { title: "Settings", url: "/settings", icon: Settings01Icon },
-  { title: "About", url: "/about", icon: InformationCircleIcon },
+  { title: "Schools", url: "/schools", icon: School01Icon },
 ];
 
-export function AppSidebar() {
+const schoolItems = [
+  { title: "School", url: "/school", icon: School01Icon },
+  { title: "Employees", url: "/school/employees", icon: UserGroupIcon },
+];
+
+type AppSidebarProps = {
+  user: {
+    email: string;
+    name: string;
+    role?: string | null;
+  };
+};
+
+export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname();
+  const items = user.role === "school" ? schoolItems : adminItems;
 
   return (
     <Sidebar>
@@ -64,8 +76,13 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <div className="px-2 text-xs text-muted-foreground">
-          shadcn sidebar demo
+        <div className="flex flex-col gap-3 px-2 text-xs text-muted-foreground">
+          <div className="flex flex-col gap-1">
+            <div className="truncate font-medium text-foreground">{user.name}</div>
+            <div className="truncate">{user.email}</div>
+            <div className="uppercase tracking-widest">{user.role ?? "user"}</div>
+          </div>
+          <SignOutButton />
         </div>
       </SidebarFooter>
     </Sidebar>

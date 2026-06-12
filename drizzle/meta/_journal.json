@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1781265869414,
+      "tag": "0000_flippant_mother_askani",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1781270103217,
+      "tag": "0001_handy_payback",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781273835850,
+      "tag": "0002_aspiring_calypso",
+      "breakpoints": true
+    }
+  ]
+}

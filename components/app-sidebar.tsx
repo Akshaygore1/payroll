@@ -2,6 +2,7 @@
 
 import {
   DashboardSquare01Icon,
+  Invoice03Icon,
   School01Icon,
   UserGroupIcon,
 } from "@hugeicons/core-free-icons";
@@ -26,11 +27,13 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 const adminItems = [
   { title: "Dashboard", url: "/dashboard", icon: DashboardSquare01Icon },
   { title: "Schools", url: "/schools", icon: School01Icon },
+  { title: "Payroll", url: "/payroll", icon: Invoice03Icon },
 ];
 
 const schoolItems = [
   { title: "School", url: "/school", icon: School01Icon },
   { title: "Employees", url: "/school/employees", icon: UserGroupIcon },
+  { title: "Payroll", url: "/school/payroll", icon: Invoice03Icon },
 ];
 
 type AppSidebarProps = {

@@ -7,7 +7,6 @@ import type {
 } from "@tanstack/react-table";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { useMemo } from "react";
 import { useState } from "react";
 
 import { SchoolStatusBadge } from "@/components/schools/school-status-badge";
@@ -38,13 +37,10 @@ export default function SchoolsPage() {
 
   const schools = data?.schools ?? [];
 
-  const stats = useMemo(() => {
-    const total = schools.length;
-    const active = schools.filter((s) => !!s.userId && !s.isBanned).length;
-    const inactive = schools.filter((s) => !!s.userId && s.isBanned).length;
-    const noLogin = schools.filter((s) => !s.userId).length;
-    return { total, active, inactive, noLogin };
-  }, [schools]);
+  const total = schools.length;
+  const active = schools.filter((s) => !!s.userId && !s.isBanned).length;
+  const inactive = schools.filter((s) => !!s.userId && s.isBanned).length;
+  const noLogin = schools.filter((s) => !s.userId).length;
 
   const columns: Array<ColumnDef<SchoolRecord>> = [
     {
@@ -120,7 +116,7 @@ export default function SchoolsPage() {
             Total
           </div>
           <div className="mt-1 font-mono text-xl font-bold">
-            {isPending ? <Skeleton className="h-6 w-8" /> : stats.total}
+            {isPending ? <Skeleton className="h-6 w-8" /> : total}
           </div>
         </div>
         <div className="border border-border-card px-4 py-3">

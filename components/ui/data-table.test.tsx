@@ -6,6 +6,7 @@ import type {
   ColumnDef,
   PaginationState,
   SortingState,
+  Table as TanStackTable,
 } from "@tanstack/react-table";
 import { useState } from "react";
 import { afterEach, describe, expect, it } from "vitest";
@@ -43,6 +44,14 @@ afterEach(() => {
   cleanup();
 });
 
+function RowCount({ table }: { table: TanStackTable<TestRow> }) {
+  return (
+    <div className="text-sm text-muted-foreground">
+      {table.getFilteredRowModel().rows.length} rows
+    </div>
+  );
+}
+
 function TestTable({
   data = rows,
   errorMessage,
@@ -73,11 +82,7 @@ function TestTable({
       }}
       onSortingChange={setSorting}
       pagination={pagination}
-      renderToolbarEnd={(table) => (
-        <div className="text-sm text-muted-foreground">
-          {table.getFilteredRowModel().rows.length} rows
-        </div>
-      )}
+      renderToolbarEnd={RowCount}
       searchPlaceholder="Search rows"
       searchValue={searchValue}
       sorting={sorting}

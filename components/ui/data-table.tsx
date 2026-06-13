@@ -24,7 +24,8 @@ import {
   type Table as TanStackTable,
   type Updater,
 } from "@tanstack/react-table";
-import type { ReactNode } from "react";
+import * as React from "react";
+import type { ComponentType } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,7 +61,7 @@ type DataTableProps<TData, TValue> = {
   searchValue?: string;
   onSearchValueChange?: (value: string) => void;
   searchPlaceholder?: string;
-  renderToolbarEnd?: (table: TanStackTable<TData>) => ReactNode;
+  renderToolbarEnd?: ComponentType<{ table: TanStackTable<TData> }>;
 };
 
 type DataTableColumnHeaderProps<TData, TValue> = {
@@ -160,7 +161,7 @@ export function DataTable<TData, TValue>({
         ) : <div />}
         {renderToolbarEnd ? (
           <div className="flex items-center justify-end">
-            {renderToolbarEnd(table)}
+            {React.createElement(renderToolbarEnd, { table })}
           </div>
         ) : null}
       </div>

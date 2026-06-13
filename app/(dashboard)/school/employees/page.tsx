@@ -14,6 +14,7 @@ import type {
 } from "@tanstack/react-table";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useReducer } from "react";
+import type { Table as TanStackTable } from "@tanstack/react-table";
 
 import { SchoolEmployeeForm } from "@/components/schools/school-employee-form";
 import {
@@ -362,12 +363,7 @@ export default function SchoolEmployeesPage() {
               })
             }
             pagination={state.pagination}
-            renderToolbarEnd={(table) => (
-              <div className="text-sm text-muted-foreground">
-                {table.getFilteredRowModel().rows.length} employee
-                {table.getFilteredRowModel().rows.length === 1 ? "" : "s"}
-              </div>
-            )}
+            renderToolbarEnd={EmployeeCount}
             searchPlaceholder="Search employees"
             searchValue={state.searchValue}
             sorting={state.sorting}
@@ -445,5 +441,18 @@ export default function SchoolEmployeesPage() {
         </AlertDialogContent>
       </AlertDialog>
     </>
+  );
+}
+
+function EmployeeCount({
+  table,
+}: {
+  table: TanStackTable<SchoolEmployeeRecord>;
+}) {
+  const count = table.getFilteredRowModel().rows.length;
+  return (
+    <div className="text-sm text-muted-foreground">
+      {count} employee{count === 1 ? "" : "s"}
+    </div>
   );
 }

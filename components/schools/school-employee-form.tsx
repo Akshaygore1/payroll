@@ -78,28 +78,6 @@ export function SchoolEmployeeForm({
     }
   }
 
-  function renderField(
-    name: SchoolEmployeeField,
-    label: string,
-    options?: { autoComplete?: string; mono?: boolean },
-  ) {
-    return (
-      <Field data-invalid={state.fieldErrors?.[name] ? true : undefined} key={name}>
-        <FieldLabel htmlFor={name}>{label}</FieldLabel>
-        <Input
-          aria-invalid={state.fieldErrors?.[name] ? true : undefined}
-          autoComplete={options?.autoComplete}
-          className={options?.mono ? "font-mono" : undefined}
-          defaultValue={defaultValues[name]}
-          id={name}
-          name={name}
-          required
-        />
-        <FieldError>{state.fieldErrors?.[name]}</FieldError>
-      </Field>
-    );
-  }
-
   return (
     <form className="flex flex-col gap-8" onSubmit={handleSubmit}>
       <div>
@@ -107,8 +85,20 @@ export function SchoolEmployeeForm({
           Identity
         </h3>
         <FieldGroup className="gap-5 sm:grid sm:grid-cols-2">
-          {renderField("fullName", "Full Name", { autoComplete: "name" })}
-          {renderField("designation", "Designation", { autoComplete: "organization-title" })}
+          <EmployeeField
+            defaultValue={defaultValues.fullName}
+            error={state.fieldErrors?.fullName}
+            label="Full Name"
+            name="fullName"
+            options={{ autoComplete: "name" }}
+          />
+          <EmployeeField
+            defaultValue={defaultValues.designation}
+            error={state.fieldErrors?.designation}
+            label="Designation"
+            name="designation"
+            options={{ autoComplete: "organization-title" }}
+          />
         </FieldGroup>
       </div>
 
@@ -119,10 +109,34 @@ export function SchoolEmployeeForm({
           Fund Details
         </h3>
         <FieldGroup className="gap-5 sm:grid sm:grid-cols-2">
-          {renderField("panNumber", "PAN Number", { mono: true })}
-          {renderField("gpfNumber", "GPF Number", { mono: true })}
-          {renderField("pfNumber", "PF Number", { mono: true })}
-          {renderField("npsAccountNumber", "NPS Account Number", { mono: true })}
+          <EmployeeField
+            defaultValue={defaultValues.panNumber}
+            error={state.fieldErrors?.panNumber}
+            label="PAN Number"
+            name="panNumber"
+            options={{ mono: true }}
+          />
+          <EmployeeField
+            defaultValue={defaultValues.gpfNumber}
+            error={state.fieldErrors?.gpfNumber}
+            label="GPF Number"
+            name="gpfNumber"
+            options={{ mono: true }}
+          />
+          <EmployeeField
+            defaultValue={defaultValues.pfNumber}
+            error={state.fieldErrors?.pfNumber}
+            label="PF Number"
+            name="pfNumber"
+            options={{ mono: true }}
+          />
+          <EmployeeField
+            defaultValue={defaultValues.npsAccountNumber}
+            error={state.fieldErrors?.npsAccountNumber}
+            label="NPS Account Number"
+            name="npsAccountNumber"
+            options={{ mono: true }}
+          />
         </FieldGroup>
       </div>
 
@@ -133,8 +147,20 @@ export function SchoolEmployeeForm({
           Contact
         </h3>
         <FieldGroup className="gap-5 sm:grid sm:grid-cols-2">
-          {renderField("whatsappNumber", "WhatsApp Number", { autoComplete: "tel", mono: true })}
-          {renderField("contactNumber", "Contact Number", { autoComplete: "tel", mono: true })}
+          <EmployeeField
+            defaultValue={defaultValues.whatsappNumber}
+            error={state.fieldErrors?.whatsappNumber}
+            label="WhatsApp Number"
+            name="whatsappNumber"
+            options={{ autoComplete: "tel", mono: true }}
+          />
+          <EmployeeField
+            defaultValue={defaultValues.contactNumber}
+            error={state.fieldErrors?.contactNumber}
+            label="Contact Number"
+            name="contactNumber"
+            options={{ autoComplete: "tel", mono: true }}
+          />
         </FieldGroup>
       </div>
 
@@ -154,5 +180,37 @@ export function SchoolEmployeeForm({
         </div>
       </div>
     </form>
+  );
+}
+
+type EmployeeFieldProps = {
+  defaultValue: string;
+  error?: string;
+  label: string;
+  name: SchoolEmployeeField;
+  options?: { autoComplete?: string; mono?: boolean };
+};
+
+function EmployeeField({
+  defaultValue,
+  error,
+  label,
+  name,
+  options,
+}: EmployeeFieldProps) {
+  return (
+    <Field data-invalid={error ? true : undefined}>
+      <FieldLabel htmlFor={name}>{label}</FieldLabel>
+      <Input
+        aria-invalid={error ? true : undefined}
+        autoComplete={options?.autoComplete}
+        className={options?.mono ? "font-mono" : undefined}
+        defaultValue={defaultValue}
+        id={name}
+        name={name}
+        required
+      />
+      <FieldError>{error}</FieldError>
+    </Field>
   );
 }

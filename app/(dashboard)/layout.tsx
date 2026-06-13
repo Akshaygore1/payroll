@@ -1,7 +1,8 @@
 import * as React from "react";
 
 import { AppSidebar } from "@/components/app-sidebar";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { DashboardShellHeader } from "@/components/dashboard-shell-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { requireSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -17,10 +18,7 @@ export default async function DashboardLayout({
     <SidebarProvider>
       <AppSidebar user={session.user} />
       <SidebarInset>
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <div className="font-medium">Dashboard</div>
-        </header>
+        <DashboardShellHeader />
         <main className="min-w-0 flex-1 overflow-x-hidden p-4 sm:p-6">{children}</main>
       </SidebarInset>
     </SidebarProvider>

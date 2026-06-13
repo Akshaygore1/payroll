@@ -5,6 +5,7 @@ import { admin } from "better-auth/plugins/admin";
 
 import { getDb } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
+import { APP_NAME } from "@/lib/app-config";
 
 type CreateAuthOptions = {
   disableSignUp?: boolean;
@@ -14,7 +15,7 @@ export function createAuth(options: CreateAuthOptions = {}) {
   const disableSignUp = options.disableSignUp ?? true;
 
   return betterAuth({
-    appName: "My App",
+    appName: APP_NAME,
     baseURL: process.env.BETTER_AUTH_URL,
     secret: process.env.BETTER_AUTH_SECRET,
     database: drizzleAdapter(getDb(), {

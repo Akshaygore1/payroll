@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { PageHeader } from "@/components/page-header";
 import { getDefaultPathForRole, requireSession } from "@/lib/auth/session";
 
 export default async function DashboardPage() {
@@ -10,12 +11,11 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
-      <p className="text-muted-foreground">
-        Welcome back{session?.user.name ? `, ${session.user.name}` : ""}. This
-        dashboard is protected by Better Auth.
-      </p>
+    <div className="space-y-6">
+      <PageHeader
+        title="Dashboard"
+        description={`Welcome back${session.user.name ? `, ${session.user.name}` : ""}. Review the current workspace and continue into your main admin flows.`}
+      />
     </div>
   );
 }

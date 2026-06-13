@@ -100,10 +100,10 @@ function PayrollSelect({
   value?: string;
 }) {
   return (
-    <Select disabled={disabled} onValueChange={onValueChange} value={value}>
-      <SelectTrigger className="w-full">
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
+      <Select disabled={disabled} onValueChange={onValueChange} value={value}>
+        <SelectTrigger>
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
       <SelectContent>
         <SelectGroup>{children}</SelectGroup>
       </SelectContent>

@@ -23,6 +23,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { APP_NAME } from "@/lib/app-config";
 
 const adminItems = [
   { title: "Dashboard", url: "/dashboard", icon: DashboardSquare01Icon },
@@ -47,12 +48,16 @@ type AppSidebarProps = {
 export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname();
   const items = user.role === "school" ? schoolItems : adminItems;
+  const roleLabel = user.role === "school" ? "School workspace" : "Admin workspace";
 
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className="flex h-12 items-center px-2 font-semibold tracking-tight">
-          My App
+        <div className="flex min-h-12 flex-col justify-center px-2 py-2">
+          <div className="font-semibold tracking-tight">{APP_NAME}</div>
+          <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            {roleLabel}
+          </div>
         </div>
       </SidebarHeader>
       <SidebarContent>

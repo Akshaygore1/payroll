@@ -43,30 +43,30 @@ export function SignInForm() {
       <FieldGroup>
         <Field>
           <FieldLabel htmlFor="email">Email</FieldLabel>
-        <Input
-          autoComplete="email"
-          id="email"
-          name="email"
-          placeholder="admin@example.com"
-          required
-          type="email"
-        />
+          <Input
+            autoComplete="email"
+            id="email"
+            name="email"
+            placeholder="admin@example.com"
+            required
+            type="email"
+          />
         </Field>
         <Field>
           <FieldLabel htmlFor="password">Password</FieldLabel>
-        <Input
-          autoComplete="current-password"
-          id="password"
-          minLength={8}
-          name="password"
-          required
-          type="password"
-        />
+          <Input
+            autoComplete="current-password"
+            id="password"
+            minLength={8}
+            name="password"
+            required
+            type="password"
+          />
         </Field>
       </FieldGroup>
       <FieldError>{error}</FieldError>
       <Button className="w-full" disabled={isPending} type="submit">
-        {isPending ? "Signing in" : "Sign in"}
+        {isPending ? "Signing in..." : "Sign in"}
       </Button>
     </form>
   );

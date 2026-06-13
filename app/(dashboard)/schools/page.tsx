@@ -10,21 +10,17 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { SchoolStatusBadge } from "@/components/schools/school-status-badge";
+import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardAction,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { DataTable, DataTableColumnHeader } from "@/components/ui/data-table";
 import { listSchoolsQuery, type SchoolRecord } from "@/lib/schools/api";
 
 export default function SchoolsPage() {
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [searchValue, setSearchValue] = useState("");
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
@@ -92,37 +88,31 @@ export default function SchoolsPage() {
   ];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Schools</CardTitle>
-        <CardDescription>
-          Manage school profiles, linked logins, and access state.
-        </CardDescription>
-        <CardAction>
+    <div className="space-y-6">
+      <PageHeader
+        title="Schools"
+        description="Manage school profiles, linked logins, and access state."
+        action={
           <Button asChild size="sm">
             <Link href="/schools/new">Add School</Link>
           </Button>
-        </CardAction>
-      </CardHeader>
-      <CardContent>
-        <DataTable
-          columns={columns}
-          data={schools}
-          emptyMessage="No schools found."
-          errorMessage={error?.message}
-          isLoading={isPending}
-          onPaginationChange={setPagination}
-          onSearchValueChange={(value) => {
-            setSearchValue(value);
-            setPagination((current) => ({ ...current, pageIndex: 0 }));
-          }}
-          onSortingChange={setSorting}
-          pagination={pagination}
-          searchPlaceholder="Search schools"
-          searchValue={searchValue}
-          sorting={sorting}
-        />
-      </CardContent>
-    </Card>
+        }
+      />
+      <Card>
+        <CardContent className="pt-6">
+          <DataTable
+            columns={columns}
+            data={schools}
+            emptyMessage="No schools found."
+            errorMessage={error?.message}
+            isLoading={isPending}
+            onPaginationChange={setPagination}
+            onSortingChange={setSorting}
+            pagination={pagination}
+            sorting={sorting}
+          />
+        </CardContent>
+      </Card>
+    </div>
   );
 }

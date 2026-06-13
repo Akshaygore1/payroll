@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+function assertResponse(response: Response | undefined): Response {
+  expect(response).toBeDefined();
+  return response as Response;
+}
+
 const mocks = vi.hoisted(() => {
   return {
     createSchoolEmployee: vi.fn(),
@@ -60,7 +65,7 @@ describe("/api/school/employees", () => {
     });
 
     const { GET } = await import("./route");
-    const response = await GET();
+    const response = assertResponse(await GET());
     const body = await response.json();
 
     expect(response.status).toBe(403);
@@ -72,7 +77,7 @@ describe("/api/school/employees", () => {
     mocks.listSchoolEmployees.mockResolvedValue([employeeRecord]);
 
     const { GET } = await import("./route");
-    const response = await GET();
+    const response = assertResponse(await GET());
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -91,11 +96,13 @@ describe("/api/school/employees", () => {
 
   it("returns validation errors for invalid create requests", async () => {
     const { POST } = await import("./route");
-    const response = await POST(
-      new Request("http://localhost/api/school/employees", {
-        method: "POST",
-        body: JSON.stringify({}),
-      }),
+    const response = assertResponse(
+      await POST(
+        new Request("http://localhost/api/school/employees", {
+          method: "POST",
+          body: JSON.stringify({}),
+        }),
+      ),
     );
     const body = await response.json();
 
@@ -121,11 +128,13 @@ describe("/api/school/employees", () => {
     mocks.createSchoolEmployee.mockResolvedValue(employeeRecord);
 
     const { POST } = await import("./route");
-    const response = await POST(
-      new Request("http://localhost/api/school/employees", {
-        method: "POST",
-        body: JSON.stringify(validEmployeeValues),
-      }),
+    const response = assertResponse(
+      await POST(
+        new Request("http://localhost/api/school/employees", {
+          method: "POST",
+          body: JSON.stringify(validEmployeeValues),
+        }),
+      ),
     );
     const body = await response.json();
 

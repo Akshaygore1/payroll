@@ -20,8 +20,10 @@ export async function POST(request: Request, { params }: Props) {
     return auth.response;
   }
 
-  const { id } = await params;
-  const body = await readJsonBody<AccessBody>(request);
+  const [{ id }, body] = await Promise.all([
+    params,
+    readJsonBody<AccessBody>(request),
+  ]);
 
   if (typeof body?.active !== "boolean") {
     return jsonResponse(

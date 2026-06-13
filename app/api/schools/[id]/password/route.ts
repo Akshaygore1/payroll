@@ -16,8 +16,10 @@ export async function POST(request: Request, { params }: Props) {
     return auth.response;
   }
 
-  const { id } = await params;
-  const body = await readJsonBody<SchoolPasswordValues>(request);
+  const [{ id }, body] = await Promise.all([
+    params,
+    readJsonBody<SchoolPasswordValues>(request),
+  ]);
 
   return resetSchoolPasswordRecord(id, body);
 }

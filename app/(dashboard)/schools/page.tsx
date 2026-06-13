@@ -1,7 +1,13 @@
 "use client";
 
+import type {
+  ColumnDef,
+  PaginationState,
+  SortingState,
+} from "@tanstack/react-table";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { useState } from "react";
 
 import { SchoolStatusBadge } from "@/components/schools/school-status-badge";
 import { Button } from "@/components/ui/button";
@@ -13,23 +19,77 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
-import { listSchoolsQuery } from "@/lib/schools/api";
+import { DataTable, DataTableColumnHeader } from "@/components/ui/data-table";
+import { listSchoolsQuery, type SchoolRecord } from "@/lib/schools/api";
 
 export default function SchoolsPage() {
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [searchValue, setSearchValue] = useState("");
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
   const { data, error, isPending } = useQuery({
     queryKey: ["schools"],
     queryFn: listSchoolsQuery,
   });
+
   const schools = data?.schools ?? [];
+  const columns: Array<ColumnDef<SchoolRecord>> = [
+    {
+      accessorKey: "schoolName",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="School" />
+      ),
+      cell: ({ row }) => (
+        <Link
+          className="font-medium underline-offset-4 hover:underline"
+          href={`/schools/${row.original.id}`}
+        >
+          {row.original.schoolName}
+        </Link>
+      ),
+    },
+    {
+      accessorKey: "principalName",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Principal" />
+      ),
+    },
+    {
+      accessorKey: "tanNo",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="TAN No." />
+      ),
+    },
+    {
+      accessorKey: "loginEmail",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Login" />
+      ),
+      cell: ({ row }) => row.original.loginEmail ?? "Not assigned",
+    },
+    {
+      accessorFn: (school) => {
+        if (!school.userId) {
+          return "No Login";
+        }
+
+        return school.isBanned ? "Inactive" : "Active";
+      },
+      id: "status",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Status" />
+      ),
+      cell: ({ row }) => (
+        <SchoolStatusBadge
+          isBanned={row.original.isBanned}
+          userId={row.original.userId}
+        />
+      ),
+    },
+  ];
 
   return (
     <Card>
@@ -45,65 +105,23 @@ export default function SchoolsPage() {
         </CardAction>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>School</TableHead>
-              <TableHead>Principal</TableHead>
-              <TableHead>TAN No.</TableHead>
-              <TableHead>Login</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isPending ? (
-              <>
-                <TableRow>
-                  <TableCell colSpan={5}>
-                    <Skeleton className="h-10" />
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell colSpan={5}>
-                    <Skeleton className="h-10" />
-                  </TableCell>
-                </TableRow>
-              </>
-            ) : null}
-            {error ? (
-              <TableRow>
-                <TableCell className="text-muted-foreground" colSpan={5}>
-                  {error.message}
-                </TableCell>
-              </TableRow>
-            ) : null}
-            {!isPending && !error && schools.length === 0 ? (
-              <TableRow>
-                <TableCell className="text-muted-foreground" colSpan={5}>
-                  No schools found.
-                </TableCell>
-              </TableRow>
-            ) : null}
-            {schools.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>
-                  <Link className="font-medium underline-offset-4 hover:underline" href={`/schools/${item.id}`}>
-                    {item.schoolName}
-                  </Link>
-                </TableCell>
-                <TableCell>{item.principalName}</TableCell>
-                <TableCell>{item.tanNo}</TableCell>
-                <TableCell>{item.loginEmail ?? "Not assigned"}</TableCell>
-                <TableCell>
-                  <SchoolStatusBadge
-                    isBanned={item.isBanned}
-                    userId={item.userId}
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <DataTable
+          columns={columns}
+          data={schools}
+          emptyMessage="No schools found."
+          errorMessage={error?.message}
+          isLoading={isPending}
+          onPaginationChange={setPagination}
+          onSearchValueChange={(value) => {
+            setSearchValue(value);
+            setPagination((current) => ({ ...current, pageIndex: 0 }));
+          }}
+          onSortingChange={setSorting}
+          pagination={pagination}
+          searchPlaceholder="Search schools"
+          searchValue={searchValue}
+          sorting={sorting}
+        />
       </CardContent>
     </Card>
   );

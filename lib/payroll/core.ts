@@ -16,13 +16,6 @@ export const payrollAmountFieldKeys = [
   "lic",
 ] as const;
 
-export const payrollDerivedFieldKeys = [
-  "totalEarnings",
-  "grandTotal",
-  "totalDeduction",
-  "netSalary",
-] as const;
-
 export const earningFieldKeys = [
   "totalPay",
   "da",
@@ -64,10 +57,12 @@ export type PayrollAmountFields = Record<
   number
 >;
 
-export type PayrollDerivedFields = Record<
-  (typeof payrollDerivedFieldKeys)[number],
-  number
->;
+export type PayrollDerivedFields = {
+  totalEarnings: number
+  grandTotal: number
+  totalDeduction: number
+  netSalary: number
+}
 
 export type PayrollLedgerRow = {
   id: string;
@@ -160,11 +155,7 @@ export function calculateDerivedPayrollFields(
   };
 }
 
-export function normalizeAmount(value: unknown) {
-  return typeof value === "number" && Number.isInteger(value) ? value : 0;
-}
-
-export function formatFinancialYearLabel(startYear: number) {
+function formatFinancialYearLabel(startYear: number) {
   const endYear = startYear + 1;
   return `${startYear}-${String(endYear).slice(-2)}`;
 }
@@ -196,7 +187,7 @@ export function getFinancialYearOptions(now = new Date(), count = 8) {
   );
 }
 
-export function getStatementMonths(statementStartMonth: number) {
+function getStatementMonths(statementStartMonth: number) {
   return Array.from({ length: 12 }, (_, index) => {
     const month = ((statementStartMonth - 1 + index) % 12) + 1;
     return month;
@@ -243,12 +234,5 @@ export function buildDefaultPayrollRows(
 }
 
 export function sortPayrollRows<T extends { displayOrder: number }>(rows: T[]) {
-  return [...rows].sort((left, right) => left.displayOrder - right.displayOrder);
-}
-
-export function withDerivedFields<T extends PayrollAmountFields>(row: T) {
-  return {
-    ...row,
-    ...calculateDerivedPayrollFields(row),
-  };
+  return rows.toSorted((left, right) => left.displayOrder - right.displayOrder);
 }

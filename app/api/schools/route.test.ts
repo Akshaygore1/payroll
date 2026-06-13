@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+function assertResponse(response: Response | undefined): Response {
+  expect(response).toBeDefined();
+  return response as Response;
+}
+
 const mocks = vi.hoisted(() => {
   return {
     getSession: vi.fn(),
@@ -34,11 +39,13 @@ describe("/api/schools", () => {
   it("returns validation errors for invalid create requests", async () => {
     const { POST } = await import("./route");
 
-    const response = await POST(
-      new Request("http://localhost/api/schools", {
-        method: "POST",
-        body: JSON.stringify({}),
-      }),
+    const response = assertResponse(
+      await POST(
+        new Request("http://localhost/api/schools", {
+          method: "POST",
+          body: JSON.stringify({}),
+        }),
+      ),
     );
     const body = await response.json();
 
@@ -64,16 +71,18 @@ describe("/api/schools", () => {
     mocks.getDb.mockReturnValue({ insert });
 
     const { POST } = await import("./route");
-    const response = await POST(
-      new Request("http://localhost/api/schools", {
-        method: "POST",
-        body: JSON.stringify({
-          schoolName: "Alpha School",
-          principalName: "Jane Doe",
-          address: "123 Road",
-          tanNo: "tan-1",
+    const response = assertResponse(
+      await POST(
+        new Request("http://localhost/api/schools", {
+          method: "POST",
+          body: JSON.stringify({
+            schoolName: "Alpha School",
+            principalName: "Jane Doe",
+            address: "123 Road",
+            tanNo: "tan-1",
+          }),
         }),
-      }),
+      ),
     );
     const body = await response.json();
 
@@ -96,16 +105,18 @@ describe("/api/schools", () => {
     mocks.getDb.mockReturnValue({ insert });
 
     const { POST } = await import("./route");
-    const response = await POST(
-      new Request("http://localhost/api/schools", {
-        method: "POST",
-        body: JSON.stringify({
-          schoolName: "Alpha School",
-          principalName: "Jane Doe",
-          address: "123 Road",
-          tanNo: "tan-1",
+    const response = assertResponse(
+      await POST(
+        new Request("http://localhost/api/schools", {
+          method: "POST",
+          body: JSON.stringify({
+            schoolName: "Alpha School",
+            principalName: "Jane Doe",
+            address: "123 Road",
+            tanNo: "tan-1",
+          }),
         }),
-      }),
+      ),
     );
     const body = await response.json();
 
@@ -128,7 +139,7 @@ describe("/api/schools", () => {
     });
 
     const { GET } = await import("./route");
-    const response = await GET();
+    const response = assertResponse(await GET());
     const body = await response.json();
 
     expect(response.status).toBe(403);

@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+function assertResponse(response: Response | undefined): Response {
+  expect(response).toBeDefined();
+  return response as Response;
+}
+
 const mocks = vi.hoisted(() => {
   return {
     deleteSchoolEmployee: vi.fn(),
@@ -65,11 +70,13 @@ describe("/api/school/employees/[id]", () => {
     });
 
     const { DELETE } = await import("./route");
-    const response = await DELETE(
-      new Request("http://localhost/api/school/employees/employee-1", {
-        method: "DELETE",
-      }),
-      routeContext(),
+    const response = assertResponse(
+      await DELETE(
+        new Request("http://localhost/api/school/employees/employee-1", {
+          method: "DELETE",
+        }),
+        routeContext(),
+      ),
     );
     const body = await response.json();
 
@@ -82,12 +89,14 @@ describe("/api/school/employees/[id]", () => {
     mocks.updateSchoolEmployee.mockResolvedValue(null);
 
     const { PATCH } = await import("./route");
-    const response = await PATCH(
-      new Request("http://localhost/api/school/employees/employee-1", {
-        method: "PATCH",
-        body: JSON.stringify(validEmployeeValues),
-      }),
-      routeContext(),
+    const response = assertResponse(
+      await PATCH(
+        new Request("http://localhost/api/school/employees/employee-1", {
+          method: "PATCH",
+          body: JSON.stringify(validEmployeeValues),
+        }),
+        routeContext(),
+      ),
     );
     const body = await response.json();
 
@@ -107,12 +116,14 @@ describe("/api/school/employees/[id]", () => {
     mocks.updateSchoolEmployee.mockResolvedValue(employeeRecord);
 
     const { PATCH } = await import("./route");
-    const response = await PATCH(
-      new Request("http://localhost/api/school/employees/employee-1", {
-        method: "PATCH",
-        body: JSON.stringify(validEmployeeValues),
-      }),
-      routeContext(),
+    const response = assertResponse(
+      await PATCH(
+        new Request("http://localhost/api/school/employees/employee-1", {
+          method: "PATCH",
+          body: JSON.stringify(validEmployeeValues),
+        }),
+        routeContext(),
+      ),
     );
     const body = await response.json();
 
@@ -132,11 +143,13 @@ describe("/api/school/employees/[id]", () => {
     mocks.deleteSchoolEmployee.mockResolvedValue(null);
 
     const { DELETE } = await import("./route");
-    const response = await DELETE(
-      new Request("http://localhost/api/school/employees/employee-1", {
-        method: "DELETE",
-      }),
-      routeContext(),
+    const response = assertResponse(
+      await DELETE(
+        new Request("http://localhost/api/school/employees/employee-1", {
+          method: "DELETE",
+        }),
+        routeContext(),
+      ),
     );
     const body = await response.json();
 
@@ -155,11 +168,13 @@ describe("/api/school/employees/[id]", () => {
     mocks.deleteSchoolEmployee.mockResolvedValue("employee-1");
 
     const { DELETE } = await import("./route");
-    const response = await DELETE(
-      new Request("http://localhost/api/school/employees/employee-1", {
-        method: "DELETE",
-      }),
-      routeContext(),
+    const response = assertResponse(
+      await DELETE(
+        new Request("http://localhost/api/school/employees/employee-1", {
+          method: "DELETE",
+        }),
+        routeContext(),
+      ),
     );
     const body = await response.json();
 

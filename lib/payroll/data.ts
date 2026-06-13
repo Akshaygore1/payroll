@@ -303,12 +303,21 @@ export async function savePayrollLedger(
       );
 
     const existingRowIds = new Set(existingRows.map((row) => row.id));
-    const submittedIds = rows
-      .map((row) => row.id)
-      .filter((rowId): rowId is string => Boolean(rowId));
-    const deletedIds = existingRows
-      .map((row) => row.id)
-      .filter((rowId) => !submittedIds.includes(rowId));
+    const submittedIds = new Set<string>();
+
+    for (const row of rows) {
+      if (row.id) {
+        submittedIds.add(row.id);
+      }
+    }
+
+    const deletedIds: string[] = [];
+
+    for (const existingRow of existingRows) {
+      if (!submittedIds.has(existingRow.id)) {
+        deletedIds.push(existingRow.id);
+      }
+    }
 
     if (deletedIds.length > 0) {
       await tx
@@ -316,48 +325,51 @@ export async function savePayrollLedger(
         .where(inArray(schoolPayrollEntry.id, deletedIds));
     }
 
-    for (const row of rows) {
-      const baseValues = {
-        schoolId,
-        employeeId,
-        financialYear,
-        rowType: row.rowType,
-        rowMonth: row.rowMonth,
-        rowLabel: row.rowLabel,
-        displayOrder: row.displayOrder,
-        basicPay: row.basicPay,
-        totalPay: row.totalPay,
-        da: row.da,
-        daDifferenceArrears: row.daDifferenceArrears,
-        hra: row.hra,
-        cla: row.cla,
-        vaTaArrear: row.vaTaArrear,
-        recovery: row.recovery,
-        gpf: row.gpf,
-        rd: row.rd,
-        cmFund: row.cmFund,
-        professionalTax: row.professionalTax,
-        revenueStamp: row.revenueStamp,
-        incomeTax: row.incomeTax,
-        lic: row.lic,
-        updatedByUserId: actorUserId,
-        updatedAt: new Date(),
-      };
+    await Promise.all(
+      rows.map(async (row) => {
+        const baseValues = {
+          schoolId,
+          employeeId,
+          financialYear,
+          rowType: row.rowType,
+          rowMonth: row.rowMonth,
+          rowLabel: row.rowLabel,
+          displayOrder: row.displayOrder,
+          basicPay: row.basicPay,
+          totalPay: row.totalPay,
+          da: row.da,
+          daDifferenceArrears: row.daDifferenceArrears,
+          hra: row.hra,
+          cla: row.cla,
+          vaTaArrear: row.vaTaArrear,
+          recovery: row.recovery,
+          gpf: row.gpf,
+          rd: row.rd,
+          cmFund: row.cmFund,
+          professionalTax: row.professionalTax,
+          revenueStamp: row.revenueStamp,
+          incomeTax: row.incomeTax,
+          lic: row.lic,
+          updatedByUserId: actorUserId,
+          updatedAt: new Date(),
+        };
 
-      if (row.id && existingRowIds.has(row.id)) {
-        await tx
-          .update(schoolPayrollEntry)
-          .set(baseValues)
-          .where(eq(schoolPayrollEntry.id, row.id));
-      } else {
+        if (row.id && existingRowIds.has(row.id)) {
+          await tx
+            .update(schoolPayrollEntry)
+            .set(baseValues)
+            .where(eq(schoolPayrollEntry.id, row.id));
+          return;
+        }
+
         await tx.insert(schoolPayrollEntry).values({
           id: crypto.randomUUID(),
           ...baseValues,
           createdByUserId: actorUserId,
           createdAt: new Date(),
         });
-      }
-    }
+      })
+    );
 
     const savedRows = await tx
       .select({

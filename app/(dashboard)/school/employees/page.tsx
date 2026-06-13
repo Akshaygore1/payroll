@@ -2,15 +2,18 @@
 
 import {
   Add01Icon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
   Delete02Icon,
   Edit02Icon,
-  Search01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import type {
+  ColumnDef,
+  PaginationState,
+  SortingState,
+  Updater,
+} from "@tanstack/react-table";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useReducer } from "react";
 
 import { SchoolEmployeeForm } from "@/components/schools/school-employee-form";
 import {
@@ -32,6 +35,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DataTable, DataTableColumnHeader } from "@/components/ui/data-table";
 import {
   Dialog,
   DialogContent,
@@ -39,16 +43,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   createSchoolEmployeeMutation,
   deleteSchoolEmployeeMutation,
@@ -57,8 +51,6 @@ import {
   type SchoolEmployeeRecord,
   type SchoolEmployeeValues,
 } from "@/lib/schools/api";
-
-const pageSize = 10;
 
 const emptyEmployeeValues: SchoolEmployeeValues = {
   fullName: "",
@@ -70,6 +62,115 @@ const emptyEmployeeValues: SchoolEmployeeValues = {
   whatsappNumber: "",
   contactNumber: "",
 };
+
+type EmployeesState = {
+  sorting: SortingState;
+  searchValue: string;
+  pagination: PaginationState;
+  editingEmployee: SchoolEmployeeRecord | null;
+  isFormOpen: boolean;
+  deletingEmployee: SchoolEmployeeRecord | null;
+};
+
+type EmployeesAction =
+  | { type: "sortingChanged"; sorting: SortingState }
+  | { type: "searchChanged"; searchValue: string }
+  | { type: "paginationChanged"; pagination: PaginationState }
+  | { type: "createStarted" }
+  | { type: "editStarted"; employee: SchoolEmployeeRecord }
+  | { type: "formOpenChanged"; open: boolean }
+  | { type: "deleteStarted"; employee: SchoolEmployeeRecord }
+  | { type: "deleteCleared" }
+  | { type: "createFinished" }
+  | { type: "updateFinished" }
+  | { type: "deleteFinished" };
+
+const initialEmployeesState: EmployeesState = {
+  sorting: [],
+  searchValue: "",
+  pagination: {
+    pageIndex: 0,
+    pageSize: 10,
+  },
+  editingEmployee: null,
+  isFormOpen: false,
+  deletingEmployee: null,
+};
+
+function employeesReducer(
+  state: EmployeesState,
+  action: EmployeesAction,
+): EmployeesState {
+  switch (action.type) {
+    case "sortingChanged":
+      return {
+        ...state,
+        sorting: action.sorting,
+      };
+    case "searchChanged":
+      return {
+        ...state,
+        searchValue: action.searchValue,
+        pagination: {
+          ...state.pagination,
+          pageIndex: 0,
+        },
+      };
+    case "paginationChanged":
+      return {
+        ...state,
+        pagination: action.pagination,
+      };
+    case "createStarted":
+      return {
+        ...state,
+        editingEmployee: null,
+        isFormOpen: true,
+      };
+    case "editStarted":
+      return {
+        ...state,
+        editingEmployee: action.employee,
+        isFormOpen: true,
+      };
+    case "formOpenChanged":
+      return {
+        ...state,
+        isFormOpen: action.open,
+        editingEmployee: action.open ? state.editingEmployee : null,
+      };
+    case "deleteStarted":
+      return {
+        ...state,
+        deletingEmployee: action.employee,
+      };
+    case "deleteCleared":
+    case "deleteFinished":
+      return {
+        ...state,
+        deletingEmployee: null,
+      };
+    case "createFinished":
+      return {
+        ...state,
+        isFormOpen: false,
+      };
+    case "updateFinished":
+      return {
+        ...state,
+        editingEmployee: null,
+        isFormOpen: false,
+      };
+  }
+}
+
+function resolveUpdater<T>(updater: Updater<T>, current: T): T {
+  if (typeof updater === "function") {
+    return (updater as (previous: T) => T)(current);
+  }
+
+  return updater;
+}
 
 function toEmployeeValues(employee: SchoolEmployeeRecord): SchoolEmployeeValues {
   return {
@@ -84,99 +185,144 @@ function toEmployeeValues(employee: SchoolEmployeeRecord): SchoolEmployeeValues 
   };
 }
 
-function matchesSearch(employee: SchoolEmployeeRecord, search: string) {
-  const normalizedSearch = search.trim().toLowerCase();
-
-  if (!normalizedSearch) {
-    return true;
-  }
-
-  return [
-    employee.fullName,
-    employee.designation,
-    employee.panNumber,
-    employee.gpfNumber,
-    employee.pfNumber,
-    employee.npsAccountNumber,
-    employee.whatsappNumber,
-    employee.contactNumber,
-  ]
-    .join(" ")
-    .toLowerCase()
-    .includes(normalizedSearch);
-}
-
 export default function SchoolEmployeesPage() {
   const queryClient = useQueryClient();
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [editingEmployee, setEditingEmployee] =
-    useState<SchoolEmployeeRecord | null>(null);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [deletingEmployee, setDeletingEmployee] =
-    useState<SchoolEmployeeRecord | null>(null);
+  const [state, dispatch] = useReducer(
+    employeesReducer,
+    initialEmployeesState,
+  );
 
   const { data, error, isPending } = useQuery({
     queryKey: ["school", "employees"],
     queryFn: listSchoolEmployeesQuery,
   });
-  const employees = useMemo(() => data?.employees ?? [], [data?.employees]);
 
-  const invalidateEmployees = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["school", "employees"] });
-  };
+  const employees = data?.employees ?? [];
 
   const createMutation = useMutation({
     mutationFn: createSchoolEmployeeMutation,
     onSuccess: async () => {
-      setIsFormOpen(false);
-      await invalidateEmployees();
+      dispatch({ type: "createFinished" });
+      await queryClient.invalidateQueries({ queryKey: ["school", "employees"] });
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: (values: SchoolEmployeeValues) => {
-      if (!editingEmployee) {
+      if (!state.editingEmployee) {
         throw new Error("No employee selected.");
       }
 
-      return updateSchoolEmployeeMutation(editingEmployee.id, values);
+      return updateSchoolEmployeeMutation(state.editingEmployee.id, values);
     },
     onSuccess: async () => {
-      setEditingEmployee(null);
-      setIsFormOpen(false);
-      await invalidateEmployees();
+      dispatch({ type: "updateFinished" });
+      await queryClient.invalidateQueries({ queryKey: ["school", "employees"] });
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteSchoolEmployeeMutation(id),
     onSuccess: async () => {
-      setDeletingEmployee(null);
-      await invalidateEmployees();
+      dispatch({ type: "deleteFinished" });
+      await queryClient.invalidateQueries({ queryKey: ["school", "employees"] });
     },
   });
 
-  const filteredEmployees = useMemo(
-    () => employees.filter((employee) => matchesSearch(employee, search)),
-    [employees, search],
-  );
-  const pageCount = Math.max(1, Math.ceil(filteredEmployees.length / pageSize));
-  const currentPage = Math.min(page, pageCount);
-  const visibleEmployees = filteredEmployees.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
-
   function openCreateForm() {
-    setEditingEmployee(null);
-    setIsFormOpen(true);
+    dispatch({ type: "createStarted" });
   }
 
   function openEditForm(employee: SchoolEmployeeRecord) {
-    setEditingEmployee(employee);
-    setIsFormOpen(true);
+    dispatch({ type: "editStarted", employee });
   }
+
+  const columns: Array<ColumnDef<SchoolEmployeeRecord>> = [
+    {
+      accessorKey: "fullName",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Full Name" />
+      ),
+      cell: ({ row }) => row.original.fullName,
+      meta: {
+        cellClassName: "font-medium",
+      },
+    },
+    {
+      accessorKey: "designation",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Designation" />
+      ),
+    },
+    {
+      accessorKey: "panNumber",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="PAN Number" />
+      ),
+    },
+    {
+      accessorKey: "gpfNumber",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="GPF Number" />
+      ),
+    },
+    {
+      accessorKey: "pfNumber",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="PF Number" />
+      ),
+    },
+    {
+      accessorKey: "npsAccountNumber",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="NPS Account Number" />
+      ),
+    },
+    {
+      accessorKey: "whatsappNumber",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="WhatsApp Number" />
+      ),
+    },
+    {
+      accessorKey: "contactNumber",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Contact Number" />
+      ),
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => (
+        <div className="flex justify-end gap-2">
+          <Button
+            aria-label={`Edit ${row.original.fullName}`}
+            onClick={() => openEditForm(row.original)}
+            size="icon-xs"
+            type="button"
+            variant="outline"
+          >
+            <HugeiconsIcon icon={Edit02Icon} />
+          </Button>
+          <Button
+            aria-label={`Delete ${row.original.fullName}`}
+            onClick={() => dispatch({ type: "deleteStarted", employee: row.original })}
+            size="icon-xs"
+            type="button"
+            variant="destructive"
+          >
+            <HugeiconsIcon icon={Delete02Icon} />
+          </Button>
+        </div>
+      ),
+      enableGlobalFilter: false,
+      enableSorting: false,
+      meta: {
+        cellClassName: "text-right",
+        headerClassName: "text-right",
+      },
+    },
+  ];
 
   return (
     <>
@@ -188,149 +334,55 @@ export default function SchoolEmployeesPage() {
           </CardDescription>
           <CardAction>
             <Button onClick={openCreateForm} size="sm">
-              <HugeiconsIcon icon={Add01Icon} data-icon="inline-start" />
+              <HugeiconsIcon data-icon="inline-start" icon={Add01Icon} />
               Add Employee
             </Button>
           </CardAction>
         </CardHeader>
-        <CardContent className="flex flex-col gap-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <label className="flex min-w-0 flex-1 items-center gap-2">
-              <span className="sr-only">Search employees</span>
-              <HugeiconsIcon
-                icon={Search01Icon}
-                className="shrink-0 text-muted-foreground"
-              />
-              <Input
-                onChange={(event) => {
-                  setSearch(event.target.value);
-                  setPage(1);
-                }}
-                placeholder="Search employees"
-                value={search}
-              />
-            </label>
-            <div className="text-sm text-muted-foreground">
-              {filteredEmployees.length} employee
-              {filteredEmployees.length === 1 ? "" : "s"}
-            </div>
-          </div>
-
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Full Name</TableHead>
-                <TableHead>Designation</TableHead>
-                <TableHead>PAN Number</TableHead>
-                <TableHead>GPF Number</TableHead>
-                <TableHead>PF Number</TableHead>
-                <TableHead>NPS Account Number</TableHead>
-                <TableHead>WhatsApp Number</TableHead>
-                <TableHead>Contact Number</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isPending ? (
-                <>
-                  <TableRow>
-                    <TableCell colSpan={9}>
-                      <Skeleton className="h-10" />
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell colSpan={9}>
-                      <Skeleton className="h-10" />
-                    </TableCell>
-                  </TableRow>
-                </>
-              ) : null}
-              {error ? (
-                <TableRow>
-                  <TableCell className="text-muted-foreground" colSpan={9}>
-                    {error.message}
-                  </TableCell>
-                </TableRow>
-              ) : null}
-              {!isPending && !error && visibleEmployees.length === 0 ? (
-                <TableRow>
-                  <TableCell className="text-muted-foreground" colSpan={9}>
-                    No employees found.
-                  </TableCell>
-                </TableRow>
-              ) : null}
-              {visibleEmployees.map((employee) => (
-                <TableRow key={employee.id}>
-                  <TableCell className="font-medium">{employee.fullName}</TableCell>
-                  <TableCell>{employee.designation}</TableCell>
-                  <TableCell>{employee.panNumber}</TableCell>
-                  <TableCell>{employee.gpfNumber}</TableCell>
-                  <TableCell>{employee.pfNumber}</TableCell>
-                  <TableCell>{employee.npsAccountNumber}</TableCell>
-                  <TableCell>{employee.whatsappNumber}</TableCell>
-                  <TableCell>{employee.contactNumber}</TableCell>
-                  <TableCell>
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        aria-label={`Edit ${employee.fullName}`}
-                        onClick={() => openEditForm(employee)}
-                        size="icon-xs"
-                        type="button"
-                        variant="outline"
-                      >
-                        <HugeiconsIcon icon={Edit02Icon} />
-                      </Button>
-                      <Button
-                        aria-label={`Delete ${employee.fullName}`}
-                        onClick={() => setDeletingEmployee(employee)}
-                        size="icon-xs"
-                        type="button"
-                        variant="destructive"
-                      >
-                        <HugeiconsIcon icon={Delete02Icon} />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-sm text-muted-foreground">
-              Page {currentPage} of {pageCount}
-            </div>
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
-              <Button
-                disabled={currentPage <= 1}
-                onClick={() => setPage((value) => Math.max(1, value - 1))}
-                type="button"
-                variant="outline"
-              >
-                <HugeiconsIcon icon={ChevronLeftIcon} data-icon="inline-start" />
-                Previous
-              </Button>
-              <Button
-                disabled={currentPage >= pageCount}
-                onClick={() =>
-                  setPage((value) => Math.min(pageCount, value + 1))
-                }
-                type="button"
-                variant="outline"
-              >
-                Next
-                <HugeiconsIcon icon={ChevronRightIcon} data-icon="inline-end" />
-              </Button>
-            </div>
-          </div>
+        <CardContent>
+          <DataTable
+            columns={columns}
+            data={employees}
+            emptyMessage="No employees found."
+            errorMessage={error?.message}
+            isLoading={isPending}
+            onPaginationChange={(pagination) =>
+              dispatch({
+                type: "paginationChanged",
+                pagination: resolveUpdater(pagination, state.pagination),
+              })
+            }
+            onSearchValueChange={(searchValue) =>
+              dispatch({ type: "searchChanged", searchValue })
+            }
+            onSortingChange={(sorting) =>
+              dispatch({
+                type: "sortingChanged",
+                sorting: resolveUpdater(sorting, state.sorting),
+              })
+            }
+            pagination={state.pagination}
+            renderToolbarEnd={(table) => (
+              <div className="text-sm text-muted-foreground">
+                {table.getFilteredRowModel().rows.length} employee
+                {table.getFilteredRowModel().rows.length === 1 ? "" : "s"}
+              </div>
+            )}
+            searchPlaceholder="Search employees"
+            searchValue={state.searchValue}
+            sorting={state.sorting}
+          />
         </CardContent>
       </Card>
 
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+      <Dialog
+        open={state.isFormOpen}
+        onOpenChange={(open) => dispatch({ type: "formOpenChanged", open })}
+      >
         <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {editingEmployee ? "Edit Employee" : "Add Employee"}
+              {state.editingEmployee ? "Edit Employee" : "Add Employee"}
             </DialogTitle>
             <DialogDescription>
               All employee details are required before saving.
@@ -338,25 +390,29 @@ export default function SchoolEmployeesPage() {
           </DialogHeader>
           <SchoolEmployeeForm
             defaultValues={
-              editingEmployee ? toEmployeeValues(editingEmployee) : emptyEmployeeValues
+              state.editingEmployee
+                ? toEmployeeValues(state.editingEmployee)
+                : emptyEmployeeValues
             }
-            onCancel={() => setIsFormOpen(false)}
+            onCancel={() => dispatch({ type: "formOpenChanged", open: false })}
             onSubmit={
-              editingEmployee
+              state.editingEmployee
                 ? updateMutation.mutateAsync
                 : createMutation.mutateAsync
             }
-            pendingLabel={editingEmployee ? "Saving" : "Creating"}
-            submitLabel={editingEmployee ? "Save Changes" : "Create Employee"}
+            pendingLabel={state.editingEmployee ? "Saving" : "Creating"}
+            submitLabel={
+              state.editingEmployee ? "Save Changes" : "Create Employee"
+            }
           />
         </DialogContent>
       </Dialog>
 
       <AlertDialog
-        open={!!deletingEmployee}
+        open={!!state.deletingEmployee}
         onOpenChange={(open) => {
           if (!open) {
-            setDeletingEmployee(null);
+            dispatch({ type: "deleteCleared" });
           }
         }}
       >
@@ -365,7 +421,7 @@ export default function SchoolEmployeesPage() {
             <AlertDialogTitle>Delete Employee</AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently delete{" "}
-              {deletingEmployee?.fullName ?? "this employee"}.
+              {state.deletingEmployee?.fullName ?? "this employee"}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -377,8 +433,8 @@ export default function SchoolEmployeesPage() {
               onClick={(event) => {
                 event.preventDefault();
 
-                if (deletingEmployee) {
-                  deleteMutation.mutate(deletingEmployee.id);
+                if (state.deletingEmployee) {
+                  deleteMutation.mutate(state.deletingEmployee.id);
                 }
               }}
               variant="destructive"

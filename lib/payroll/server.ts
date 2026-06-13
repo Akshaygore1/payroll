@@ -26,7 +26,7 @@ const payrollAmountShape = Object.fromEntries(
   payrollAmountFieldKeys.map((key) => [key, z.number().int().min(0)]),
 ) as Record<(typeof payrollAmountFieldKeys)[number], z.ZodNumber>;
 
-export const payrollSettingsSchema = z.object({
+const payrollSettingsSchema = z.object({
   statementStartMonth: z.number().int().min(1).max(12),
 });
 
@@ -57,7 +57,7 @@ const payrollLedgerRowSchema = z
     }
   });
 
-export const payrollLedgerPayloadSchema = z.object({
+const payrollLedgerPayloadSchema = z.object({
   employeeId: z.string().trim().min(1, "Employee is required."),
   financialYear: z
     .string()
@@ -90,7 +90,7 @@ function getFieldErrors(error: z.ZodError) {
   );
 }
 
-export async function requirePayrollAccess(requestedSchoolId: string | null) {
+async function requirePayrollAccess(requestedSchoolId: string | null) {
   const session = await getSession();
 
   if (!session) {

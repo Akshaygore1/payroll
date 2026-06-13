@@ -37,30 +37,47 @@ export default function SchoolDetailPage() {
   });
   const school = data?.school;
 
-  const invalidateSchool = async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["schools"] }),
-      queryClient.invalidateQueries({ queryKey: ["schools", id] }),
-      queryClient.invalidateQueries({ queryKey: ["school", "current"] }),
-    ]);
-  };
-
   const updateMutation = useMutation({
     mutationFn: (values: SchoolFormValues) => updateSchoolMutation(id, values),
-    onSuccess: invalidateSchool,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["schools"] }),
+        queryClient.invalidateQueries({ queryKey: ["schools", id] }),
+        queryClient.invalidateQueries({ queryKey: ["school", "current"] }),
+      ]);
+    },
   });
   const createLoginMutation = useMutation({
     mutationFn: (values: SchoolLoginValues) =>
       createSchoolLoginMutation(id, values),
-    onSuccess: invalidateSchool,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["schools"] }),
+        queryClient.invalidateQueries({ queryKey: ["schools", id] }),
+        queryClient.invalidateQueries({ queryKey: ["school", "current"] }),
+      ]);
+    },
   });
   const resetPasswordMutation = useMutation({
     mutationFn: (values: SchoolPasswordValues) =>
       resetSchoolPasswordMutation(id, values),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["schools"] }),
+        queryClient.invalidateQueries({ queryKey: ["schools", id] }),
+        queryClient.invalidateQueries({ queryKey: ["school", "current"] }),
+      ]);
+    },
   });
   const accessMutation = useMutation({
     mutationFn: (active: boolean) => setSchoolAccessMutation(id, active),
-    onSuccess: invalidateSchool,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["schools"] }),
+        queryClient.invalidateQueries({ queryKey: ["schools", id] }),
+        queryClient.invalidateQueries({ queryKey: ["school", "current"] }),
+      ]);
+    },
   });
 
   if (isPending) {

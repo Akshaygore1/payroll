@@ -1,7 +1,5 @@
 import {
-  buildDefaultPayrollRows,
   calculateDerivedPayrollFields,
-  defaultStatementStartMonth,
   getStatementMonthYear,
   monthNames,
   payrollColumnLabels,
@@ -98,7 +96,7 @@ async function requestJson<TResponse>(
   return body;
 }
 
-export function buildPayrollContextUrl(schoolId?: string) {
+function buildPayrollContextUrl(schoolId?: string) {
   const searchParams = new URLSearchParams();
 
   if (schoolId) {
@@ -109,7 +107,7 @@ export function buildPayrollContextUrl(schoolId?: string) {
   return `/api/payroll/context${query ? `?${query}` : ""}`;
 }
 
-export function buildPayrollLedgerUrl(params: {
+function buildPayrollLedgerUrl(params: {
   schoolId?: string;
   employeeId: string;
   financialYear: string;
@@ -181,24 +179,6 @@ export function savePayrollLedgerMutation(
       body: JSON.stringify(values),
     },
   );
-}
-
-export function createLedgerDraftRows(
-  financialYear: string,
-  statementStartMonth = defaultStatementStartMonth,
-) {
-  const timestamp = new Date().toISOString();
-
-  return buildDefaultPayrollRows(financialYear, statementStartMonth).map((row) => ({
-    id: "",
-    schoolId: "",
-    employeeId: "",
-    financialYear,
-    ...row,
-    ...calculateDerivedPayrollFields(row),
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  }));
 }
 
 export function normalizeLedgerRow(row: PayrollLedgerRowRecord) {

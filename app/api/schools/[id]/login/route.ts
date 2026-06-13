@@ -16,8 +16,10 @@ export async function POST(request: Request, { params }: Props) {
     return auth.response;
   }
 
-  const { id } = await params;
-  const body = await readJsonBody<SchoolLoginValues>(request);
+  const [{ id }, body] = await Promise.all([
+    params,
+    readJsonBody<SchoolLoginValues>(request),
+  ]);
 
   return createSchoolLoginRecord(id, body);
 }

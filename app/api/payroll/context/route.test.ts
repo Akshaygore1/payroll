@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+function assertResponse(response: Response | undefined): Response {
+  expect(response).toBeDefined();
+  return response as Response;
+}
+
 const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   getSchoolIdForUser: vi.fn(),
@@ -62,7 +67,9 @@ describe("/api/payroll/context", () => {
 
   it("returns payroll context for the current school user", async () => {
     const { GET } = await import("./route");
-    const response = await GET(new Request("http://localhost/api/payroll/context"));
+    const response = assertResponse(
+      await GET(new Request("http://localhost/api/payroll/context")),
+    );
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -75,8 +82,10 @@ describe("/api/payroll/context", () => {
 
   it("rejects school access for another school", async () => {
     const { GET } = await import("./route");
-    const response = await GET(
-      new Request("http://localhost/api/payroll/context?schoolId=school-2"),
+    const response = assertResponse(
+      await GET(
+        new Request("http://localhost/api/payroll/context?schoolId=school-2"),
+      ),
     );
     const body = await response.json();
 
@@ -93,7 +102,9 @@ describe("/api/payroll/context", () => {
     });
 
     const { GET } = await import("./route");
-    const response = await GET(new Request("http://localhost/api/payroll/context"));
+    const response = assertResponse(
+      await GET(new Request("http://localhost/api/payroll/context")),
+    );
     const body = await response.json();
 
     expect(response.status).toBe(400);

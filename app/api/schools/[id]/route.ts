@@ -45,8 +45,10 @@ export async function PATCH(request: Request, { params }: Props) {
     return auth.response;
   }
 
-  const { id } = await params;
-  const body = await readJsonBody<SchoolFormValues>(request);
+  const [{ id }, body] = await Promise.all([
+    params,
+    readJsonBody<SchoolFormValues>(request),
+  ]);
 
   return updateSchoolRecord(id, body);
 }

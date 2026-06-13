@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+function assertResponse(response: Response | undefined): Response {
+  expect(response).toBeDefined();
+  return response as Response;
+}
+
 const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   getSchoolIdForUser: vi.fn(),
@@ -64,9 +69,11 @@ describe("/api/payroll/ledger", () => {
 
   it("rejects invalid financial year queries", async () => {
     const { GET } = await import("./route");
-    const response = await GET(
-      new Request(
-        "http://localhost/api/payroll/ledger?employeeId=employee-1&financialYear=2023",
+    const response = assertResponse(
+      await GET(
+        new Request(
+          "http://localhost/api/payroll/ledger?employeeId=employee-1&financialYear=2023",
+        ),
       ),
     );
     const body = await response.json();
@@ -79,9 +86,11 @@ describe("/api/payroll/ledger", () => {
     mocks.listPayrollLedger.mockResolvedValue([]);
 
     const { GET } = await import("./route");
-    const response = await GET(
-      new Request(
-        "http://localhost/api/payroll/ledger?employeeId=employee-1&financialYear=2023-24",
+    const response = assertResponse(
+      await GET(
+        new Request(
+          "http://localhost/api/payroll/ledger?employeeId=employee-1&financialYear=2023-24",
+        ),
       ),
     );
     const body = await response.json();
@@ -134,37 +143,39 @@ describe("/api/payroll/ledger", () => {
     ]);
 
     const { PUT } = await import("./route");
-    const response = await PUT(
-      new Request("http://localhost/api/payroll/ledger?schoolId=school-1", {
-        method: "PUT",
-        body: JSON.stringify({
-          employeeId: "employee-1",
-          financialYear: "2023-24",
-          rows: [
-            {
-              rowType: "month",
-              rowMonth: 4,
-              rowLabel: "Apr-23",
-              displayOrder: 0,
-              basicPay: 100,
-              totalPay: 100,
-              da: 10,
-              daDifferenceArrears: 0,
-              hra: 5,
-              cla: 2,
-              vaTaArrear: 0,
-              recovery: 0,
-              gpf: 0,
-              rd: 0,
-              cmFund: 1,
-              professionalTax: 2,
-              revenueStamp: 0,
-              incomeTax: 0,
-              lic: 0,
-            },
-          ],
+    const response = assertResponse(
+      await PUT(
+        new Request("http://localhost/api/payroll/ledger?schoolId=school-1", {
+          method: "PUT",
+          body: JSON.stringify({
+            employeeId: "employee-1",
+            financialYear: "2023-24",
+            rows: [
+              {
+                rowType: "month",
+                rowMonth: 4,
+                rowLabel: "Apr-23",
+                displayOrder: 0,
+                basicPay: 100,
+                totalPay: 100,
+                da: 10,
+                daDifferenceArrears: 0,
+                hra: 5,
+                cla: 2,
+                vaTaArrear: 0,
+                recovery: 0,
+                gpf: 0,
+                rd: 0,
+                cmFund: 1,
+                professionalTax: 2,
+                revenueStamp: 0,
+                incomeTax: 0,
+                lic: 0,
+              },
+            ],
+          }),
         }),
-      }),
+      ),
     );
     const body = await response.json();
 

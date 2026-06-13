@@ -24,7 +24,7 @@ import type {
   SchoolPasswordValues,
 } from "@/lib/schools/api";
 
-export const schoolSchema = z.object({
+const schoolSchema = z.object({
   schoolName: z.string().trim().min(1, "School name is required."),
   principalName: z.string().trim().min(1, "Principal name is required."),
   address: z.string().trim().min(1, "Address is required."),
@@ -35,7 +35,7 @@ export const schoolSchema = z.object({
     .transform((value) => value.toUpperCase()),
 });
 
-export const schoolEmployeeSchema = z.object({
+const schoolEmployeeSchema = z.object({
   fullName: z.string().trim().min(1, "Full name is required."),
   designation: z.string().trim().min(1, "Designation is required."),
   panNumber: z
@@ -53,12 +53,12 @@ export const schoolEmployeeSchema = z.object({
   contactNumber: z.string().trim().min(1, "Contact number is required."),
 });
 
-export const loginSchema = z.object({
+const loginSchema = z.object({
   email: z.email("Enter a valid email address.").trim(),
   password: z.string().min(8, "Password must be at least 8 characters."),
 });
 
-export const passwordSchema = z.object({
+const passwordSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters."),
 });
 
@@ -108,7 +108,7 @@ export function getFieldErrors(error: z.ZodError) {
   );
 }
 
-export function isUniqueViolation(error: unknown) {
+function isUniqueViolation(error: unknown) {
   return (
     typeof error === "object" &&
     error !== null &&

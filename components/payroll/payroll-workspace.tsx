@@ -25,9 +25,9 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  getRowPeriodLabel,
   getPayrollContextQuery,
   getPayrollLedgerQuery,
+  getRowPeriodLabel,
   normalizeLedgerRow,
   savePayrollLedgerMutation,
   summarizePayrollRows,
@@ -57,8 +57,12 @@ const summaryColumns = [
 ] as const;
 
 type PayrollWorkspaceProps = {
-  role: "admin" | "school";
+  scope: "admin" | "school";
 };
+
+type PayrollContextData = Awaited<ReturnType<typeof getPayrollContextQuery>>;
+type PayrollSchool = PayrollContextData["school"];
+type PayrollEmployee = PayrollContextData["employees"][number];
 
 function parseInteger(value: string) {
   const parsed = Number.parseInt(value, 10);
@@ -132,6 +136,240 @@ function PayrollAmountInput({
         value={String(row[fieldKey])}
       />
     </Field>
+  );
+}
+
+function AdminSchoolPicker({
+  isPending,
+  schools,
+  selectedSchoolId,
+  onSchoolChange,
+}: {
+  isPending: boolean;
+  schools: Awaited<ReturnType<typeof listSchoolsQuery>>["schools"];
+  selectedSchoolId: string;
+  onSchoolChange: (value: string) => void;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Payroll</CardTitle>
+        <CardDescription>
+          Select a school first, then manage employee payroll and annual statements.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+        <Field>
+          <FieldLabel>School</FieldLabel>
+          <PayrollSelect
+            disabled={isPending}
+            onValueChange={onSchoolChange}
+            placeholder="Select a school"
+            value={selectedSchoolId || undefined}
+          >
+            {schools.map((school) => (
+              <SelectItem key={school.id} value={school.id}>
+                {school.schoolName}
+              </SelectItem>
+            ))}
+          </PayrollSelect>
+        </Field>
+        <div className="text-sm text-muted-foreground">
+          {isPending ? "Loading schools..." : `${schools.length} schools`}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function PayrollSelectionEmptyState() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Select a School</CardTitle>
+        <CardDescription>
+          Payroll becomes available after a school is selected.
+        </CardDescription>
+      </CardHeader>
+    </Card>
+  );
+}
+
+function PayrollLoadingState() {
+  return (
+    <div className="grid gap-6">
+      <Skeleton className="h-36" />
+      <Skeleton className="h-96" />
+    </div>
+  );
+}
+
+function PayrollErrorState({ message }: { message: string }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Unable to Load Payroll</CardTitle>
+        <CardDescription>{message}</CardDescription>
+      </CardHeader>
+    </Card>
+  );
+}
+
+function PayrollSchoolSummary({
+  employeeCount,
+  onSaveSettings,
+  onStatementMonthChange,
+  payrollSchool,
+  statementStartMonth,
+}: {
+  employeeCount: number;
+  onSaveSettings: () => void;
+  onStatementMonthChange: (value: string) => void;
+  payrollSchool: PayrollSchool;
+  statementStartMonth: number;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{payrollSchool.schoolName}</CardTitle>
+        <CardDescription>
+          Annual payroll ledger and statement setup for the selected school.
+        </CardDescription>
+        <CardAction>
+          <Button onClick={onSaveSettings} size="sm" variant="outline">
+            Save Settings
+          </Button>
+        </CardAction>
+      </CardHeader>
+      <CardContent className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-2">
+            <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
+              Principal
+            </span>
+            <div className="text-sm">{payrollSchool.principalName}</div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
+              TAN No.
+            </span>
+            <div className="text-sm">{payrollSchool.tanNo}</div>
+          </div>
+          <div className="flex flex-col gap-2 sm:col-span-2">
+            <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
+              Address
+            </span>
+            <div className="text-sm">{payrollSchool.address}</div>
+          </div>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field>
+            <FieldLabel>Statement Start Month</FieldLabel>
+            <PayrollSelect
+              onValueChange={onStatementMonthChange}
+              placeholder="Select month"
+              value={String(statementStartMonth)}
+            >
+              {statementMonthOptions.map((month) => (
+                <SelectItem key={month.value} value={String(month.value)}>
+                  {month.label}
+                </SelectItem>
+              ))}
+            </PayrollSelect>
+          </Field>
+          <div className="flex flex-col gap-2">
+            <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
+              Employees
+            </span>
+            <div className="text-sm">{employeeCount} available</div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function PayrollNoEmployeesState() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>No Employees</CardTitle>
+        <CardDescription>
+          Add employees before creating payroll rows for this school.
+        </CardDescription>
+      </CardHeader>
+    </Card>
+  );
+}
+
+function PayrollFilterCard({
+  effectiveEmployeeId,
+  effectiveFinancialYear,
+  employees,
+  financialYears,
+  onEmployeeChange,
+  onFinancialYearChange,
+  selectedEmployee,
+}: {
+  effectiveEmployeeId: string;
+  effectiveFinancialYear: string;
+  employees: PayrollEmployee[];
+  financialYears: string[];
+  onEmployeeChange: (value: string) => void;
+  onFinancialYearChange: (value: string) => void;
+  selectedEmployee: PayrollEmployee | null;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Ledger Filters</CardTitle>
+        <CardDescription>
+          Choose an employee and financial year before filling or downloading payroll.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-4 lg:grid-cols-4">
+        <Field>
+          <FieldLabel>Employee</FieldLabel>
+          <PayrollSelect
+            onValueChange={onEmployeeChange}
+            placeholder="Select employee"
+            value={effectiveEmployeeId || undefined}
+          >
+            {employees.map((employee) => (
+              <SelectItem key={employee.id} value={employee.id}>
+                {employee.fullName}
+              </SelectItem>
+            ))}
+          </PayrollSelect>
+        </Field>
+        <Field>
+          <FieldLabel>Financial Year</FieldLabel>
+          <PayrollSelect
+            onValueChange={onFinancialYearChange}
+            placeholder="Select financial year"
+            value={effectiveFinancialYear || undefined}
+          >
+            {financialYears.map((financialYear) => (
+              <SelectItem key={financialYear} value={financialYear}>
+                {financialYear}
+              </SelectItem>
+            ))}
+          </PayrollSelect>
+        </Field>
+        <div className="flex flex-col gap-2">
+          <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
+            Designation
+          </span>
+          <div className="text-sm">{selectedEmployee?.designation ?? "-"}</div>
+        </div>
+        <div className="flex flex-col gap-2">
+          <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
+            PAN Number
+          </span>
+          <div className="text-sm">{selectedEmployee?.panNumber ?? "-"}</div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -401,12 +639,12 @@ function PayrollMonthlyWorkspace({
   );
 }
 
-export function PayrollWorkspace({ role }: PayrollWorkspaceProps) {
+export function PayrollWorkspace({ scope }: PayrollWorkspaceProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const selectedSchoolId =
-    role === "admin" ? searchParams.get("schoolId") ?? "" : undefined;
+    scope === "admin" ? searchParams.get("schoolId") ?? "" : undefined;
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [selectedFinancialYear, setSelectedFinancialYear] = useState("");
   const [statementStartMonthDraft, setStatementStartMonthDraft] = useState<{
@@ -414,52 +652,60 @@ export function PayrollWorkspace({ role }: PayrollWorkspaceProps) {
     value: number;
   } | null>(null);
 
-  const schoolsQuery = useQuery({
+  const { data: schoolsData, isPending: isSchoolsPending } = useQuery({
     queryKey: ["schools"],
     queryFn: listSchoolsQuery,
-    enabled: role === "admin",
+    enabled: scope === "admin",
   });
 
-  const contextQuery = useQuery({
+  const {
+    data: payrollContext,
+    error: payrollContextError,
+    isPending: isPayrollContextPending,
+  } = useQuery({
     queryKey: ["payroll", "context", selectedSchoolId || "current"],
     queryFn: () => getPayrollContextQuery(selectedSchoolId || undefined),
-    enabled: role === "school" || Boolean(selectedSchoolId),
+    enabled: scope === "school" || Boolean(selectedSchoolId),
   });
 
   const effectiveEmployeeId = useMemo(() => {
-    if (!contextQuery.data) {
+    if (!payrollContext) {
       return "";
     }
 
-    return contextQuery.data.employees.some(
+    return payrollContext.employees.some(
       (employee) => employee.id === selectedEmployeeId,
     )
       ? selectedEmployeeId
       : "";
-  }, [contextQuery.data, selectedEmployeeId]);
+  }, [payrollContext, selectedEmployeeId]);
 
   const effectiveFinancialYear = useMemo(() => {
-    if (!contextQuery.data) {
+    if (!payrollContext) {
       return "";
     }
 
     if (
       selectedFinancialYear &&
-      contextQuery.data.financialYears.includes(selectedFinancialYear)
+      payrollContext.financialYears.includes(selectedFinancialYear)
     ) {
       return selectedFinancialYear;
     }
 
-    return contextQuery.data.financialYears[0] ?? "";
-  }, [contextQuery.data, selectedFinancialYear]);
+    return payrollContext.financialYears[0] ?? "";
+  }, [payrollContext, selectedFinancialYear]);
 
-  const statementStartMonth = contextQuery.data
-    ? statementStartMonthDraft?.schoolId === contextQuery.data.school.id
+  const statementStartMonth = payrollContext
+    ? statementStartMonthDraft?.schoolId === payrollContext.school.id
       ? statementStartMonthDraft.value
-      : contextQuery.data.settings.statementStartMonth
+      : payrollContext.settings.statementStartMonth
     : 4;
 
-  const ledgerQuery = useQuery({
+  const {
+    data: ledgerData,
+    error: ledgerError,
+    isPending: isLedgerPending,
+  } = useQuery({
     queryKey: [
       "payroll",
       "ledger",
@@ -474,7 +720,7 @@ export function PayrollWorkspace({ role }: PayrollWorkspaceProps) {
         financialYear: effectiveFinancialYear,
       }),
     enabled:
-      Boolean(contextQuery.data) &&
+      Boolean(payrollContext) &&
       Boolean(effectiveEmployeeId) &&
       Boolean(effectiveFinancialYear),
   });
@@ -547,12 +793,12 @@ export function PayrollWorkspace({ role }: PayrollWorkspaceProps) {
       });
     },
   });
+
   const selectedEmployee = useMemo(
     () =>
-      contextQuery.data?.employees.find(
-        (employee) => employee.id === effectiveEmployeeId,
-      ) ?? null,
-    [contextQuery.data?.employees, effectiveEmployeeId],
+      payrollContext?.employees.find((employee) => employee.id === effectiveEmployeeId) ??
+      null,
+    [payrollContext?.employees, effectiveEmployeeId],
   );
 
   function handleSchoolChange(nextSchoolId: string) {
@@ -571,14 +817,14 @@ export function PayrollWorkspace({ role }: PayrollWorkspaceProps) {
   }
 
   async function handleDownloadPdf(nextRows: PayrollLedgerRowRecord[]) {
-    if (!contextQuery.data || !ledgerQuery.data || !selectedEmployee) {
+    if (!payrollContext || !ledgerData || !selectedEmployee) {
       return;
     }
 
     await downloadPayrollPdf({
-      school: contextQuery.data.school,
+      school: payrollContext.school,
       employee: selectedEmployee,
-      settings: contextQuery.data.settings,
+      settings: payrollContext.settings,
       financialYear: effectiveFinancialYear,
       rows: nextRows,
     });
@@ -588,14 +834,14 @@ export function PayrollWorkspace({ role }: PayrollWorkspaceProps) {
     nextRows: PayrollLedgerRowRecord[],
     monthLabel: string,
   ) {
-    if (!contextQuery.data || !ledgerQuery.data || !selectedEmployee) {
+    if (!payrollContext || !ledgerData || !selectedEmployee) {
       return;
     }
 
     await downloadPayrollPdf({
-      school: contextQuery.data.school,
+      school: payrollContext.school,
       employee: selectedEmployee,
-      settings: contextQuery.data.settings,
+      settings: payrollContext.settings,
       financialYear: effectiveFinancialYear,
       rows: nextRows,
       fileNameSuffix: monthLabel,
@@ -604,8 +850,7 @@ export function PayrollWorkspace({ role }: PayrollWorkspaceProps) {
 
   const ledgerEditorKey = useMemo(() => {
     const rowToken =
-      ledgerQuery.data?.rows.map((row) => `${row.id}:${row.updatedAt}`).join("|") ??
-      "empty";
+      ledgerData?.rows.map((row) => `${row.id}:${row.updatedAt}`).join("|") ?? "empty";
 
     return [
       selectedSchoolId || "current",
@@ -616,220 +861,73 @@ export function PayrollWorkspace({ role }: PayrollWorkspaceProps) {
   }, [
     effectiveEmployeeId,
     effectiveFinancialYear,
-    ledgerQuery.data?.rows,
+    ledgerData?.rows,
     selectedSchoolId,
   ]);
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
-      {role === "admin" ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Payroll</CardTitle>
-            <CardDescription>
-              Select a school first, then manage employee payroll and annual statements.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-            <Field>
-              <FieldLabel>School</FieldLabel>
-              <PayrollSelect
-                disabled={schoolsQuery.isPending}
-                onValueChange={handleSchoolChange}
-                placeholder="Select a school"
-                value={selectedSchoolId || undefined}
-              >
-                {(schoolsQuery.data?.schools ?? []).map((school) => (
-                  <SelectItem key={school.id} value={school.id}>
-                    {school.schoolName}
-                  </SelectItem>
-                ))}
-              </PayrollSelect>
-            </Field>
-            <div className="text-sm text-muted-foreground">
-              {schoolsQuery.isPending
-                ? "Loading schools..."
-                : `${schoolsQuery.data?.schools.length ?? 0} schools`}
-            </div>
-          </CardContent>
-        </Card>
+      {scope === "admin" ? (
+        <AdminSchoolPicker
+          isPending={isSchoolsPending}
+          onSchoolChange={handleSchoolChange}
+          schools={schoolsData?.schools ?? []}
+          selectedSchoolId={selectedSchoolId ?? ""}
+        />
       ) : null}
 
-      {role === "admin" && !selectedSchoolId ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Select a School</CardTitle>
-            <CardDescription>
-              Payroll becomes available after a school is selected.
-            </CardDescription>
-          </CardHeader>
-        </Card>
+      {scope === "admin" && !selectedSchoolId ? <PayrollSelectionEmptyState /> : null}
+
+      {(scope === "school" || selectedSchoolId) && isPayrollContextPending ? (
+        <PayrollLoadingState />
       ) : null}
 
-      {(role === "school" || selectedSchoolId) && contextQuery.isPending ? (
-        <div className="grid gap-6">
-          <Skeleton className="h-36" />
-          <Skeleton className="h-96" />
-        </div>
+      {payrollContextError ? (
+        <PayrollErrorState message={payrollContextError.message} />
       ) : null}
 
-      {contextQuery.error ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Unable to Load Payroll</CardTitle>
-            <CardDescription>{contextQuery.error.message}</CardDescription>
-          </CardHeader>
-        </Card>
-      ) : null}
-
-      {contextQuery.data ? (
+      {payrollContext ? (
         <>
-          <Card>
-            <CardHeader>
-              <CardTitle>{contextQuery.data.school.schoolName}</CardTitle>
-              <CardDescription>
-                Annual payroll ledger and statement setup for the selected school.
-              </CardDescription>
-              <CardAction>
-                <Button
-                  onClick={() => saveSettingsMutation.mutate(statementStartMonth)}
-                  size="sm"
-                  variant="outline"
-                >
-                  Save Settings
-                </Button>
-              </CardAction>
-            </CardHeader>
-            <CardContent className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="flex flex-col gap-2">
-                  <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
-                    Principal
-                  </span>
-                  <div className="text-sm">{contextQuery.data.school.principalName}</div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
-                    TAN No.
-                  </span>
-                  <div className="text-sm">{contextQuery.data.school.tanNo}</div>
-                </div>
-                <div className="flex flex-col gap-2 sm:col-span-2">
-                  <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
-                    Address
-                  </span>
-                  <div className="text-sm">{contextQuery.data.school.address}</div>
-                </div>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field>
-                  <FieldLabel>Statement Start Month</FieldLabel>
-                  <PayrollSelect
-                    onValueChange={(value) =>
-                      setStatementStartMonthDraft({
-                        schoolId: contextQuery.data.school.id,
-                        value: Number(value),
-                      })
-                    }
-                    placeholder="Select month"
-                    value={String(statementStartMonth)}
-                  >
-                    {statementMonthOptions.map((month) => (
-                      <SelectItem key={month.value} value={String(month.value)}>
-                        {month.label}
-                      </SelectItem>
-                    ))}
-                  </PayrollSelect>
-                </Field>
-                <div className="flex flex-col gap-2">
-                  <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
-                    Employees
-                  </span>
-                  <div className="text-sm">
-                    {contextQuery.data.employees.length} available
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <PayrollSchoolSummary
+            employeeCount={payrollContext.employees.length}
+            onSaveSettings={() => saveSettingsMutation.mutate(statementStartMonth)}
+            onStatementMonthChange={(value) =>
+              setStatementStartMonthDraft({
+                schoolId: payrollContext.school.id,
+                value: Number(value),
+              })
+            }
+            payrollSchool={payrollContext.school}
+            statementStartMonth={statementStartMonth}
+          />
 
-          {contextQuery.data.employees.length === 0 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>No Employees</CardTitle>
-                <CardDescription>
-                  Add employees before creating payroll rows for this school.
-                </CardDescription>
-              </CardHeader>
-            </Card>
+          {payrollContext.employees.length === 0 ? (
+            <PayrollNoEmployeesState />
           ) : (
             <>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Ledger Filters</CardTitle>
-                  <CardDescription>
-                    Choose an employee and financial year before filling or downloading payroll.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4 lg:grid-cols-4">
-                  <Field>
-                    <FieldLabel>Employee</FieldLabel>
-                    <PayrollSelect
-                      onValueChange={setSelectedEmployeeId}
-                      placeholder="Select employee"
-                      value={effectiveEmployeeId || undefined}
-                    >
-                      {contextQuery.data.employees.map((employee) => (
-                        <SelectItem key={employee.id} value={employee.id}>
-                          {employee.fullName}
-                        </SelectItem>
-                      ))}
-                    </PayrollSelect>
-                  </Field>
-                  <Field>
-                    <FieldLabel>Financial Year</FieldLabel>
-                    <PayrollSelect
-                      onValueChange={setSelectedFinancialYear}
-                      placeholder="Select financial year"
-                      value={effectiveFinancialYear || undefined}
-                    >
-                      {contextQuery.data.financialYears.map((financialYear) => (
-                        <SelectItem key={financialYear} value={financialYear}>
-                          {financialYear}
-                        </SelectItem>
-                      ))}
-                    </PayrollSelect>
-                  </Field>
-                  <div className="flex flex-col gap-2">
-                    <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
-                      Designation
-                    </span>
-                    <div className="text-sm">{selectedEmployee?.designation ?? "-"}</div>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
-                      PAN Number
-                    </span>
-                    <div className="text-sm">{selectedEmployee?.panNumber ?? "-"}</div>
-                  </div>
-                </CardContent>
-              </Card>
+              <PayrollFilterCard
+                effectiveEmployeeId={effectiveEmployeeId}
+                effectiveFinancialYear={effectiveFinancialYear}
+                employees={payrollContext.employees}
+                financialYears={payrollContext.financialYears}
+                onEmployeeChange={setSelectedEmployeeId}
+                onFinancialYearChange={setSelectedFinancialYear}
+                selectedEmployee={selectedEmployee}
+              />
 
-              {effectiveEmployeeId ? (
-                <PayrollMonthlyWorkspace
-                  financialYear={effectiveFinancialYear}
-                  initialRows={ledgerQuery.data?.rows ?? []}
-                  isLoading={ledgerQuery.isPending}
-                  isSaving={saveLedgerMutation.isPending}
-                  key={ledgerEditorKey}
-                  loadError={ledgerQuery.error?.message}
-                  onDownloadAnnual={handleDownloadPdf}
-                  onDownloadMonthly={handleDownloadMonthlyPdf}
-                  onSave={(nextRows) => saveLedgerMutation.mutate(nextRows)}
-                  saveError={saveLedgerMutation.error?.message}
-                  statementStartMonth={statementStartMonth}
-                />
-              ) : null}
+              <PayrollMonthlyWorkspace
+                financialYear={effectiveFinancialYear}
+                initialRows={ledgerData?.rows ?? []}
+                isLoading={isLedgerPending}
+                isSaving={saveLedgerMutation.isPending}
+                key={ledgerEditorKey}
+                loadError={ledgerError?.message}
+                onDownloadAnnual={handleDownloadPdf}
+                onDownloadMonthly={handleDownloadMonthlyPdf}
+                onSave={saveLedgerMutation.mutate}
+                saveError={saveLedgerMutation.error?.message}
+                statementStartMonth={statementStartMonth}
+              />
             </>
           )}
         </>

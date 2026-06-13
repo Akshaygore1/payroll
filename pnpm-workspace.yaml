@@ -1,3 +1,48 @@
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
+minimumReleaseAge: 10080
+minimumReleaseAgeExclude:
+  - '@better-*/*'
+  - '@better-auth/core'
+  - '@better-auth/drizzle-adapter'
+  - '@hugeicons/core-free-icons'
+  - '@hugeicons/react'
+  - '@next/env'
+  - '@tailwindcss/postcss'
+  - '@tanstack/react-query'
+  - '@tanstack/react-table'
+  - '@testing-library/dom'
+  - '@testing-library/jest-dom'
+  - '@testing-library/react'
+  - '@testing-library/user-event'
+  - '@types/node'
+  - '@types/react'
+  - '@types/react-dom'
+  - better-auth
+  - class-variance-authority
+  - clsx
+  - drizzle-kit
+  - drizzle-orm
+  - eslint
+  - eslint-config-next
+  - jsdom
+  - jspdf
+  - jspdf-autotable
+  - next
+  - postgres
+  - radix-ui
+  - react
+  - react-dom
+  - shadcn
+  - tailwind-merge
+  - tailwindcss
+  - tw-animate-css
+  - typescript-eslint
+  - typescript
+  - vitest
+  - zod
+trustPolicy: no-downgrade
+trustPolicyExclude:
+  - eslint-import-resolver-typescript@3.10.1
+  - undici-types@6.21.0

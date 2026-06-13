@@ -123,41 +123,13 @@ function PayrollAmountInput({
   );
 }
 
-function SummaryCard({
-  label,
-  value,
-}: {
-  label: string;
-  value: number;
-}) {
+function SummaryCard({ label, value }: { label: string; value: number }) {
   return (
     <div className="border border-border-card px-4 py-3">
       <div className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
         {label}
       </div>
       <div className="mt-2 font-mono text-xl font-semibold">{value}</div>
-    </div>
-  );
-}
-
-function StepIndicator({ current, total }: { current: number; total: number }) {
-  return (
-    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-      {Array.from({ length: total }, (_, i) => (
-        <span
-          key={i}
-          className={
-            i + 1 === current
-              ? "flex h-5 w-5 items-center justify-center border border-accent bg-accent text-accent-foreground text-[10px] font-bold"
-              : "flex h-5 w-5 items-center justify-center border border-border text-muted-foreground/40 text-[10px]"
-          }
-        >
-          {i + 1}
-        </span>
-      ))}
-      <span className="ml-1">
-        Step {current} of {total}
-      </span>
     </div>
   );
 }
@@ -176,7 +148,6 @@ function AdminSchoolPicker({
   return (
     <Card>
       <CardHeader>
-        <StepIndicator current={1} total={4} />
         <CardTitle className="font-display text-lg font-bold mt-2">
           Select School
         </CardTitle>
@@ -212,7 +183,9 @@ function PayrollSelectionEmptyState() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-display text-lg font-bold">Payroll</CardTitle>
+        <CardTitle className="font-display text-lg font-bold">
+          Payroll
+        </CardTitle>
         <CardDescription>
           Select a school above to begin working with payroll records.
         </CardDescription>
@@ -234,7 +207,9 @@ function PayrollErrorState({ message }: { message: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-display text-lg font-bold">Unable to Load Payroll</CardTitle>
+        <CardTitle className="font-display text-lg font-bold">
+          Unable to Load Payroll
+        </CardTitle>
         <CardDescription>{message}</CardDescription>
       </CardHeader>
     </Card>
@@ -257,7 +232,6 @@ function PayrollSchoolSummary({
   return (
     <Card>
       <CardHeader>
-        <StepIndicator current={2} total={4} />
         <CardTitle className="font-display text-lg font-bold mt-2">
           {payrollSchool.schoolName}
         </CardTitle>
@@ -282,7 +256,9 @@ function PayrollSchoolSummary({
             <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
               TAN No.
             </span>
-            <div className="mt-0.5 font-mono text-sm">{payrollSchool.tanNo}</div>
+            <div className="mt-0.5 font-mono text-sm">
+              {payrollSchool.tanNo}
+            </div>
           </div>
           <div className="sm:col-span-2">
             <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
@@ -322,7 +298,9 @@ function PayrollNoEmployeesState() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-display text-lg font-bold">No Employees</CardTitle>
+        <CardTitle className="font-display text-lg font-bold">
+          No Employees
+        </CardTitle>
         <CardDescription>
           Add employees before creating payroll rows for this school.
         </CardDescription>
@@ -351,7 +329,6 @@ function PayrollLedgerContextBar({
   return (
     <Card>
       <CardHeader>
-        <StepIndicator current={3} total={4} />
         <CardTitle className="font-display text-lg font-bold mt-2">
           Employee &amp; Period
         </CardTitle>
@@ -393,13 +370,17 @@ function PayrollLedgerContextBar({
             <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
               Designation
             </span>
-            <div className="mt-0.5 text-sm">{selectedEmployee?.designation ?? "-"}</div>
+            <div className="mt-0.5 text-sm">
+              {selectedEmployee?.designation ?? "-"}
+            </div>
           </div>
           <div className="flex flex-col justify-end pb-2">
             <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
               PAN Number
             </span>
-            <div className="mt-0.5 font-mono text-sm">{selectedEmployee?.panNumber ?? "-"}</div>
+            <div className="mt-0.5 font-mono text-sm">
+              {selectedEmployee?.panNumber ?? "-"}
+            </div>
           </div>
         </div>
       </CardContent>
@@ -434,16 +415,20 @@ function PayrollMonthlyWorkspace({
   ) => Promise<void>;
 }) {
   const [rows, setRows] = useState(initialRows);
-  const [activePanel, setActivePanel] = useState<"fill" | "download" | null>(null);
+  const [activePanel, setActivePanel] = useState<"fill" | "download" | null>(
+    null,
+  );
   const [selectedMonth, setSelectedMonth] = useState("");
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const totals = useMemo(() => summarizePayrollRows(rows), [rows]);
   const monthlyRows = useMemo(
-    () => rows.filter((row) => row.rowType === "month" && row.rowMonth !== null),
+    () =>
+      rows.filter((row) => row.rowType === "month" && row.rowMonth !== null),
     [rows],
   );
   const selectedMonthlyRow = useMemo(
-    () => monthlyRows.find((row) => String(row.rowMonth) === selectedMonth) ?? null,
+    () =>
+      monthlyRows.find((row) => String(row.rowMonth) === selectedMonth) ?? null,
     [monthlyRows, selectedMonth],
   );
 
@@ -477,7 +462,9 @@ function PayrollMonthlyWorkspace({
   }
 
   function selectedMonthLabel() {
-    return monthOptions.find((month) => month.value === selectedMonth)?.label ?? "";
+    return (
+      monthOptions.find((month) => month.value === selectedMonth)?.label ?? ""
+    );
   }
 
   function handleSave() {
@@ -501,7 +488,6 @@ function PayrollMonthlyWorkspace({
 
       <Card>
         <CardHeader>
-          <StepIndicator current={4} total={4} />
           <CardTitle className="font-display text-lg font-bold mt-2">
             Payroll Actions
           </CardTitle>
@@ -510,14 +496,18 @@ function PayrollMonthlyWorkspace({
           </CardDescription>
           <CardAction className="flex flex-wrap gap-2">
             <Button
-              onClick={() => setActivePanel(activePanel === "fill" ? null : "fill")}
+              onClick={() =>
+                setActivePanel(activePanel === "fill" ? null : "fill")
+              }
               size="sm"
               variant={activePanel === "fill" ? "default" : "outline"}
             >
               Fill Monthly Payroll
             </Button>
             <Button
-              onClick={() => setActivePanel(activePanel === "download" ? null : "download")}
+              onClick={() =>
+                setActivePanel(activePanel === "download" ? null : "download")
+              }
               size="sm"
               variant={activePanel === "download" ? "default" : "outline"}
             >
@@ -531,7 +521,9 @@ function PayrollMonthlyWorkspace({
       {loadError ? (
         <Card>
           <CardHeader>
-            <CardTitle className="font-display text-lg font-bold">Unable to Load Ledger</CardTitle>
+            <CardTitle className="font-display text-lg font-bold">
+              Unable to Load Ledger
+            </CardTitle>
             <CardDescription>{loadError}</CardDescription>
           </CardHeader>
         </Card>
@@ -585,7 +577,11 @@ function PayrollMonthlyWorkspace({
                       <PayrollAmountInput
                         fieldKey="basicPay"
                         onChange={(field, value) =>
-                          updateRow(selectedMonthlyRow.rowMonth ?? 0, field, value)
+                          updateRow(
+                            selectedMonthlyRow.rowMonth ?? 0,
+                            field,
+                            value,
+                          )
                         }
                         row={selectedMonthlyRow}
                       />
@@ -594,7 +590,11 @@ function PayrollMonthlyWorkspace({
                           fieldKey={key}
                           key={key}
                           onChange={(field, value) =>
-                            updateRow(selectedMonthlyRow.rowMonth ?? 0, field, value)
+                            updateRow(
+                              selectedMonthlyRow.rowMonth ?? 0,
+                              field,
+                              value,
+                            )
                           }
                           row={selectedMonthlyRow}
                         />
@@ -608,7 +608,11 @@ function PayrollMonthlyWorkspace({
                       <PayrollAmountInput
                         fieldKey="recovery"
                         onChange={(field, value) =>
-                          updateRow(selectedMonthlyRow.rowMonth ?? 0, field, value)
+                          updateRow(
+                            selectedMonthlyRow.rowMonth ?? 0,
+                            field,
+                            value,
+                          )
                         }
                         row={selectedMonthlyRow}
                       />
@@ -617,7 +621,11 @@ function PayrollMonthlyWorkspace({
                           fieldKey={key}
                           key={key}
                           onChange={(field, value) =>
-                            updateRow(selectedMonthlyRow.rowMonth ?? 0, field, value)
+                            updateRow(
+                              selectedMonthlyRow.rowMonth ?? 0,
+                              field,
+                              value,
+                            )
                           }
                           row={selectedMonthlyRow}
                         />
@@ -632,10 +640,14 @@ function PayrollMonthlyWorkspace({
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   {saveMessage ? (
-                    <span className="text-sm text-muted-foreground">{saveMessage}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {saveMessage}
+                    </span>
                   ) : null}
                   {saveError ? (
-                    <span className="text-sm text-destructive">{saveError}</span>
+                    <span className="text-sm text-destructive">
+                      {saveError}
+                    </span>
                   ) : null}
                 </div>
                 <Button
@@ -683,14 +695,20 @@ function PayrollMonthlyWorkspace({
                   disabled={!selectedMonthlyRow}
                   onClick={() =>
                     selectedMonthlyRow
-                      ? onDownloadMonthly([selectedMonthlyRow], selectedMonthLabel())
+                      ? onDownloadMonthly(
+                          [selectedMonthlyRow],
+                          selectedMonthLabel(),
+                        )
                       : undefined
                   }
                   variant="outline"
                 >
                   Download Monthly
                 </Button>
-                <Button disabled={!rows.length} onClick={() => onDownloadAnnual(rows)}>
+                <Button
+                  disabled={!rows.length}
+                  onClick={() => onDownloadAnnual(rows)}
+                >
                   Download Annual
                 </Button>
               </div>
@@ -707,7 +725,7 @@ export function PayrollWorkspace({ scope }: PayrollWorkspaceProps) {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const selectedSchoolId =
-    scope === "admin" ? searchParams.get("schoolId") ?? "" : undefined;
+    scope === "admin" ? (searchParams.get("schoolId") ?? "") : undefined;
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [selectedFinancialYear, setSelectedFinancialYear] = useState("");
   const [statementStartMonthDraft, setStatementStartMonthDraft] = useState<{
@@ -856,8 +874,9 @@ export function PayrollWorkspace({ scope }: PayrollWorkspaceProps) {
 
   const selectedEmployee = useMemo(
     () =>
-      payrollContext?.employees.find((employee) => employee.id === effectiveEmployeeId) ??
-      null,
+      payrollContext?.employees.find(
+        (employee) => employee.id === effectiveEmployeeId,
+      ) ?? null,
     [payrollContext?.employees, effectiveEmployeeId],
   );
 
@@ -908,7 +927,8 @@ export function PayrollWorkspace({ scope }: PayrollWorkspaceProps) {
 
   const ledgerEditorKey = useMemo(() => {
     const rowToken =
-      ledgerData?.rows.map((row) => `${row.id}:${row.updatedAt}`).join("|") ?? "empty";
+      ledgerData?.rows.map((row) => `${row.id}:${row.updatedAt}`).join("|") ??
+      "empty";
     return [
       selectedSchoolId || "current",
       effectiveEmployeeId,
@@ -953,7 +973,9 @@ export function PayrollWorkspace({ scope }: PayrollWorkspaceProps) {
         <div className="animate-fade-in-up-delay-1 flex min-w-0 flex-col gap-6">
           <PayrollSchoolSummary
             employeeCount={payrollContext.employees.length}
-            onSaveSettings={() => saveSettingsMutation.mutate(statementStartMonth)}
+            onSaveSettings={() =>
+              saveSettingsMutation.mutate(statementStartMonth)
+            }
             onStatementMonthChange={(value) =>
               setStatementStartMonthDraft({
                 schoolId: payrollContext.school.id,

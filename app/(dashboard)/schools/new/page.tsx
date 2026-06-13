@@ -29,30 +29,40 @@ export default function NewSchoolPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Add School"
-        description="Step 1 of 2: create the school profile. Login credentials can be assigned after save."
-        action={
-          <Button asChild size="sm" variant="outline">
-            <Link href="/schools">Back to Schools</Link>
-          </Button>
-        }
-      />
-      <Card>
-        <CardContent className="pt-6">
-          <SchoolForm
-            onSubmit={createMutation.mutateAsync}
-            defaultValues={{
-              schoolName: "",
-              principalName: "",
-              address: "",
-              tanNo: "",
-            }}
-            pendingLabel="Creating"
-            submitLabel="Create School"
-          />
-        </CardContent>
-      </Card>
+      <div className="animate-fade-in-up">
+        <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-widest text-accent">
+          <span className="flex h-6 w-6 items-center justify-center border border-accent bg-accent text-accent-foreground text-xs font-bold">
+            1
+          </span>
+          <span>Step 1 of 2: Create School Profile</span>
+        </div>
+        <PageHeader
+          title="Add School"
+          description="Create the school profile first. Login credentials can be assigned after saving."
+          action={
+            <Button asChild size="sm" variant="outline">
+              <Link href="/schools">Back to Schools</Link>
+            </Button>
+          }
+        />
+      </div>
+      <div className="animate-fade-in-up-delay-1">
+        <Card>
+          <CardContent className="pt-6">
+            <SchoolForm
+              onSubmit={createMutation.mutateAsync}
+              defaultValues={{
+                schoolName: "",
+                principalName: "",
+                address: "",
+                tanNo: "",
+              }}
+              pendingLabel="Creating"
+              submitLabel="Create School"
+            />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

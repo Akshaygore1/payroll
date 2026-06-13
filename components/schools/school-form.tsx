@@ -73,55 +73,70 @@ export function SchoolForm({
   }
 
   return (
-    <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
-      <FieldGroup>
-        <Field data-invalid={state.fieldErrors?.schoolName ? true : undefined}>
-          <FieldLabel htmlFor="schoolName">School Name</FieldLabel>
-          <Input
-            aria-invalid={state.fieldErrors?.schoolName ? true : undefined}
-            defaultValue={defaultValues.schoolName}
-            id="schoolName"
-            name="schoolName"
-            required
-          />
-          <FieldError>{state.fieldErrors?.schoolName}</FieldError>
-        </Field>
-        <Field data-invalid={state.fieldErrors?.principalName ? true : undefined}>
-          <FieldLabel htmlFor="principalName">Principal Name</FieldLabel>
-          <Input
-            aria-invalid={state.fieldErrors?.principalName ? true : undefined}
-            defaultValue={defaultValues.principalName}
-            id="principalName"
-            name="principalName"
-            required
-          />
-          <FieldError>{state.fieldErrors?.principalName}</FieldError>
-        </Field>
-        <Field data-invalid={state.fieldErrors?.tanNo ? true : undefined}>
-          <FieldLabel htmlFor="tanNo">TAN No.</FieldLabel>
-          <Input
-            aria-invalid={state.fieldErrors?.tanNo ? true : undefined}
-            defaultValue={defaultValues.tanNo}
-            id="tanNo"
-            name="tanNo"
-            required
-          />
-          <FieldError>{state.fieldErrors?.tanNo}</FieldError>
-        </Field>
-        <Field data-invalid={state.fieldErrors?.address ? true : undefined}>
-          <FieldLabel htmlFor="address">Address</FieldLabel>
-          <Textarea
-            aria-invalid={state.fieldErrors?.address ? true : undefined}
-            defaultValue={defaultValues.address}
-            id="address"
-            name="address"
-            required
-            rows={4}
-          />
-          <FieldError>{state.fieldErrors?.address}</FieldError>
-        </Field>
-      </FieldGroup>
-      <div className="flex items-center justify-between gap-4">
+    <form className="flex flex-col gap-8" onSubmit={handleSubmit}>
+      <div>
+        <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          School Details
+        </h3>
+        <FieldGroup>
+          <Field data-invalid={state.fieldErrors?.schoolName ? true : undefined}>
+            <FieldLabel htmlFor="schoolName">School Name</FieldLabel>
+            <Input
+              aria-invalid={state.fieldErrors?.schoolName ? true : undefined}
+              defaultValue={defaultValues.schoolName}
+              id="schoolName"
+              name="schoolName"
+              required
+            />
+            <FieldError>{state.fieldErrors?.schoolName}</FieldError>
+          </Field>
+          <Field data-invalid={state.fieldErrors?.tanNo ? true : undefined}>
+            <FieldLabel htmlFor="tanNo">TAN No.</FieldLabel>
+            <Input
+              aria-invalid={state.fieldErrors?.tanNo ? true : undefined}
+              className="font-mono"
+              defaultValue={defaultValues.tanNo}
+              id="tanNo"
+              name="tanNo"
+              required
+            />
+            <FieldError>{state.fieldErrors?.tanNo}</FieldError>
+          </Field>
+        </FieldGroup>
+      </div>
+
+      <div>
+        <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          Administrative Details
+        </h3>
+        <FieldGroup>
+          <Field data-invalid={state.fieldErrors?.principalName ? true : undefined}>
+            <FieldLabel htmlFor="principalName">Principal Name</FieldLabel>
+            <Input
+              aria-invalid={state.fieldErrors?.principalName ? true : undefined}
+              defaultValue={defaultValues.principalName}
+              id="principalName"
+              name="principalName"
+              required
+            />
+            <FieldError>{state.fieldErrors?.principalName}</FieldError>
+          </Field>
+          <Field data-invalid={state.fieldErrors?.address ? true : undefined}>
+            <FieldLabel htmlFor="address">Address</FieldLabel>
+            <Textarea
+              aria-invalid={state.fieldErrors?.address ? true : undefined}
+              defaultValue={defaultValues.address}
+              id="address"
+              name="address"
+              required
+              rows={4}
+            />
+            <FieldError>{state.fieldErrors?.address}</FieldError>
+          </Field>
+        </FieldGroup>
+      </div>
+
+      <div className="flex items-center justify-between gap-4 border-t pt-4">
         <p className="text-sm text-muted-foreground">{state.message ?? ""}</p>
         <Button disabled={isPending} type="submit">
           {isPending ? pendingLabel : submitLabel}

@@ -10,4 +10,5 @@
 # design
 - Strictly use the existing project design system only; do not introduce new design patterns. Confidence: 0.85
 - Use shadcn/ui for any new components needed. Confidence: 0.80
+- Use section-first composition (PageSection, SectionInset) instead of Card wrappers for primary page regions; reserve Cards for secondary/compact surfaces only. Confidence: 0.70
 

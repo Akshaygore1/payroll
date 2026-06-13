@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import {
   ApiError,
   type SchoolEmployeeField,
@@ -26,21 +27,6 @@ type SchoolEmployeeFormProps = {
   pendingLabel: string;
   submitLabel: string;
 };
-
-const fields: Array<{
-  name: SchoolEmployeeField;
-  label: string;
-  autoComplete?: string;
-}> = [
-  { name: "fullName", label: "Full Name", autoComplete: "name" },
-  { name: "designation", label: "Designation", autoComplete: "organization-title" },
-  { name: "panNumber", label: "PAN Number" },
-  { name: "gpfNumber", label: "GPF Number" },
-  { name: "pfNumber", label: "PF Number" },
-  { name: "npsAccountNumber", label: "NPS Account Number" },
-  { name: "whatsappNumber", label: "WhatsApp Number", autoComplete: "tel" },
-  { name: "contactNumber", label: "Contact Number", autoComplete: "tel" },
-];
 
 const initialState: SchoolMutationResult<SchoolEmployeeField> = {};
 
@@ -60,10 +46,16 @@ export function SchoolEmployeeForm({
     setIsPending(true);
 
     const formData = new FormData(event.currentTarget);
-    const values = fields.reduce((accumulator, field) => {
-      accumulator[field.name] = String(formData.get(field.name) ?? "");
-      return accumulator;
-    }, {} as SchoolEmployeeValues);
+    const values: SchoolEmployeeValues = {
+      fullName: String(formData.get("fullName") ?? ""),
+      designation: String(formData.get("designation") ?? ""),
+      panNumber: String(formData.get("panNumber") ?? ""),
+      gpfNumber: String(formData.get("gpfNumber") ?? ""),
+      pfNumber: String(formData.get("pfNumber") ?? ""),
+      npsAccountNumber: String(formData.get("npsAccountNumber") ?? ""),
+      whatsappNumber: String(formData.get("whatsappNumber") ?? ""),
+      contactNumber: String(formData.get("contactNumber") ?? ""),
+    };
 
     try {
       const result = await onSubmit(values);
@@ -86,27 +78,68 @@ export function SchoolEmployeeForm({
     }
   }
 
+  function renderField(
+    name: SchoolEmployeeField,
+    label: string,
+    options?: { autoComplete?: string; mono?: boolean },
+  ) {
+    return (
+      <Field data-invalid={state.fieldErrors?.[name] ? true : undefined} key={name}>
+        <FieldLabel htmlFor={name}>{label}</FieldLabel>
+        <Input
+          aria-invalid={state.fieldErrors?.[name] ? true : undefined}
+          autoComplete={options?.autoComplete}
+          className={options?.mono ? "font-mono" : undefined}
+          defaultValue={defaultValues[name]}
+          id={name}
+          name={name}
+          required
+        />
+        <FieldError>{state.fieldErrors?.[name]}</FieldError>
+      </Field>
+    );
+  }
+
   return (
-    <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
-      <FieldGroup className="gap-5 sm:grid sm:grid-cols-2">
-        {fields.map((field) => (
-          <Field
-            data-invalid={state.fieldErrors?.[field.name] ? true : undefined}
-            key={field.name}
-          >
-            <FieldLabel htmlFor={field.name}>{field.label}</FieldLabel>
-            <Input
-              aria-invalid={state.fieldErrors?.[field.name] ? true : undefined}
-              autoComplete={field.autoComplete}
-              defaultValue={defaultValues[field.name]}
-              id={field.name}
-              name={field.name}
-              required
-            />
-            <FieldError>{state.fieldErrors?.[field.name]}</FieldError>
-          </Field>
-        ))}
-      </FieldGroup>
+    <form className="flex flex-col gap-8" onSubmit={handleSubmit}>
+      <div>
+        <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          Identity
+        </h3>
+        <FieldGroup className="gap-5 sm:grid sm:grid-cols-2">
+          {renderField("fullName", "Full Name", { autoComplete: "name" })}
+          {renderField("designation", "Designation", { autoComplete: "organization-title" })}
+        </FieldGroup>
+      </div>
+
+      <Separator />
+
+      <div>
+        <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          Fund Details
+        </h3>
+        <FieldGroup className="gap-5 sm:grid sm:grid-cols-2">
+          {renderField("panNumber", "PAN Number", { mono: true })}
+          {renderField("gpfNumber", "GPF Number", { mono: true })}
+          {renderField("pfNumber", "PF Number", { mono: true })}
+          {renderField("npsAccountNumber", "NPS Account Number", { mono: true })}
+        </FieldGroup>
+      </div>
+
+      <Separator />
+
+      <div>
+        <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          Contact
+        </h3>
+        <FieldGroup className="gap-5 sm:grid sm:grid-cols-2">
+          {renderField("whatsappNumber", "WhatsApp Number", { autoComplete: "tel", mono: true })}
+          {renderField("contactNumber", "Contact Number", { autoComplete: "tel", mono: true })}
+        </FieldGroup>
+      </div>
+
+      <Separator />
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="min-h-5 text-sm text-muted-foreground">
           {state.message ?? ""}

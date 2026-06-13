@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Building02Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 
 import {
   AlertDialog,
@@ -12,7 +10,6 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogMedia,
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
@@ -24,6 +21,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import {
   ApiError,
   type SchoolMutationResult,
@@ -102,9 +100,12 @@ export function SchoolAccessControls({
   return (
     <div className="flex flex-col gap-8">
       <form className="flex flex-col gap-6" onSubmit={handlePasswordReset}>
+        <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          Reset Password
+        </h4>
         <FieldGroup>
           <Field data-invalid={state.fieldErrors?.password ? true : undefined}>
-            <FieldLabel htmlFor="resetPassword">Reset Password</FieldLabel>
+            <FieldLabel htmlFor="resetPassword">New Password</FieldLabel>
             <Input
               aria-invalid={state.fieldErrors?.password ? true : undefined}
               autoComplete="new-password"
@@ -125,48 +126,59 @@ export function SchoolAccessControls({
         </div>
       </form>
 
-      {accessMessage ? (
-        <p className="text-sm text-muted-foreground">{accessMessage}</p>
-      ) : null}
+      <Separator />
 
-      {isActive ? (
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button disabled={isChangingAccess} variant="destructive">
-              Deactivate Login
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogMedia>
-                <HugeiconsIcon icon={Building02Icon} />
-              </AlertDialogMedia>
-              <AlertDialogTitle>Deactivate School Login</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will block the school from signing in until an admin
-                reactivates the account.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => void handleAccessChange(false)}
-                variant="destructive"
-              >
-                {isChangingAccess ? "Deactivating" : "Deactivate"}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      ) : (
-        <Button
-          disabled={isChangingAccess}
-          onClick={() => void handleAccessChange(true)}
-          type="button"
-        >
-          {isChangingAccess ? "Reactivating" : "Reactivate Login"}
-        </Button>
-      )}
+      <div className="flex flex-col gap-4">
+        <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          Access State
+        </h4>
+        <p className="text-sm text-muted-foreground">
+          Currently {isActive ? "active" : "inactive"}.{" "}
+          {isActive
+            ? "Deactivating blocks sign-in until an admin reactivates."
+            : "Reactivate to restore sign-in access."}
+        </p>
+
+        {accessMessage ? (
+          <p className="text-sm text-muted-foreground">{accessMessage}</p>
+        ) : null}
+
+        {isActive ? (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive">
+                Deactivate Login
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Deactivate School Login</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will block the school from signing in until an admin
+                  reactivates the account.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => void handleAccessChange(false)}
+                  variant="destructive"
+                >
+                  {isChangingAccess ? "Deactivating" : "Deactivate"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        ) : (
+          <Button
+            disabled={isChangingAccess}
+            onClick={() => void handleAccessChange(true)}
+            type="button"
+          >
+            {isChangingAccess ? "Reactivating" : "Reactivate Login"}
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

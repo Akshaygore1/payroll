@@ -7,6 +7,7 @@ import { SchoolAccessControls } from "@/components/schools/school-access-control
 import { SchoolForm } from "@/components/schools/school-form";
 import { SchoolLoginForm } from "@/components/schools/school-login-form";
 import { SchoolStatusBadge } from "@/components/schools/school-status-badge";
+import { PageHeader } from "@/components/page-header";
 import {
   Card,
   CardContent,
@@ -14,6 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   createSchoolLoginMutation,
@@ -82,9 +84,12 @@ export default function SchoolDetailPage() {
 
   if (isPending) {
     return (
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
-        <Skeleton className="h-96" />
-        <Skeleton className="h-72" />
+      <div className="space-y-6">
+        <Skeleton className="h-12 w-64" />
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
+          <Skeleton className="h-96" />
+          <Skeleton className="h-72" />
+        </div>
       </div>
     );
   }
@@ -103,87 +108,106 @@ export default function SchoolDetailPage() {
   }
 
   const isActive = !!school.userId && !school.isBanned;
+  const hasLogin = !!school.userId;
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
-      <Card>
-        <CardHeader>
-          <CardTitle>{school.schoolName}</CardTitle>
-          <CardDescription>
-            Update the school profile and business identifiers.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <SchoolForm
-            onSubmit={updateMutation.mutateAsync}
-            defaultValues={{
-              schoolName: school.schoolName,
-              principalName: school.principalName,
-              address: school.address,
-              tanNo: school.tanNo,
-            }}
-            pendingLabel="Saving"
-            submitLabel="Save Changes"
-          />
-        </CardContent>
-      </Card>
+    <div className="space-y-6">
+      <div className="animate-fade-in-up">
+        <PageHeader
+          title={school.schoolName}
+          description="Review the school profile and manage account access."
+          action={<SchoolStatusBadge isBanned={school.isBanned} userId={school.userId} />}
+        />
+      </div>
 
-      <div className="flex flex-col gap-6">
+      <div className="animate-fade-in-up-delay-1 grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
         <Card>
           <CardHeader>
-            <CardTitle>Login Status</CardTitle>
+            <CardTitle className="font-display text-lg font-bold">School Profile</CardTitle>
             <CardDescription>
-              Track whether the school has an assigned login and whether access
-              is active.
+              Update the school profile and business identifiers.
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-sm text-muted-foreground">Current state</span>
-              <SchoolStatusBadge isBanned={school.isBanned} userId={school.userId} />
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-sm text-muted-foreground">Login email</span>
-              <span className="text-sm font-medium">
-                {school.loginEmail ?? "Not assigned"}
-              </span>
-            </div>
+          <CardContent>
+            <SchoolForm
+              onSubmit={updateMutation.mutateAsync}
+              defaultValues={{
+                schoolName: school.schoolName,
+                principalName: school.principalName,
+                address: school.address,
+                tanNo: school.tanNo,
+              }}
+              pendingLabel="Saving"
+              submitLabel="Save Changes"
+            />
           </CardContent>
         </Card>
 
-        {!school.userId ? (
+        <div className="flex flex-col gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Create Login</CardTitle>
+              <CardTitle className="font-display text-lg font-bold">Account Access</CardTitle>
               <CardDescription>
-                Assign the first school login after the profile is created.
+                {hasLogin
+                  ? "Manage the school login, credentials, and access state."
+                  : "Assign a login for this school to access the portal."}
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <SchoolLoginForm
-                onSubmit={createLoginMutation.mutateAsync}
-                pendingLabel="Creating"
-                submitLabel="Create Login"
-              />
+            <CardContent className="flex flex-col gap-4">
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-sm text-muted-foreground">Status</span>
+                <SchoolStatusBadge isBanned={school.isBanned} userId={school.userId} />
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-sm text-muted-foreground">Login email</span>
+                <span className="text-sm font-medium font-mono">
+                  {school.loginEmail ?? "Not assigned"}
+                </span>
+              </div>
             </CardContent>
           </Card>
-        ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>Access Controls</CardTitle>
-              <CardDescription>
-                Reset credentials and control sign-in access for this school.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <SchoolAccessControls
-                isActive={isActive}
-                onResetPassword={resetPasswordMutation.mutateAsync}
-                onSetActive={accessMutation.mutateAsync}
-              />
-            </CardContent>
-          </Card>
-        )}
+
+          {!hasLogin ? (
+            <div className="animate-fade-in-up-delay-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="font-display text-lg font-bold">Create Login</CardTitle>
+                  <CardDescription>
+                    Assign credentials so this school can sign in.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <SchoolLoginForm
+                    onSubmit={createLoginMutation.mutateAsync}
+                    pendingLabel="Creating"
+                    submitLabel="Create Login"
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <>
+              <Separator />
+              <div className="animate-fade-in-up-delay-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="font-display text-lg font-bold">Password Reset</CardTitle>
+                    <CardDescription>
+                      Set a new password for the school login.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <SchoolAccessControls
+                      isActive={isActive}
+                      onResetPassword={resetPasswordMutation.mutateAsync}
+                      onSetActive={accessMutation.mutateAsync}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

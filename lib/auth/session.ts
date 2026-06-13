@@ -2,10 +2,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { createAuth } from "@/lib/auth/server";
-
-export function getDefaultPathForRole(role?: string | null) {
-  return role === "school" ? "/school" : "/dashboard";
-}
+import { getDefaultPathForRole } from "@/lib/auth/roles";
 
 export async function getSession() {
   return createAuth().api.getSession({

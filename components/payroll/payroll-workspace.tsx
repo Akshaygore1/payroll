@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   getPayrollContextQuery,
@@ -69,23 +70,6 @@ function parseInteger(value: string) {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
 }
 
-function SummaryCard({
-  label,
-  value,
-}: {
-  label: string;
-  value: number;
-}) {
-  return (
-    <div className="border border-border px-4 py-3">
-      <div className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
-        {label}
-      </div>
-      <div className="mt-2 text-xl font-semibold tabular-nums">{value}</div>
-    </div>
-  );
-}
-
 function PayrollSelect({
   children,
   disabled,
@@ -100,10 +84,10 @@ function PayrollSelect({
   value?: string;
 }) {
   return (
-      <Select disabled={disabled} onValueChange={onValueChange} value={value}>
-        <SelectTrigger>
-          <SelectValue placeholder={placeholder} />
-        </SelectTrigger>
+    <Select disabled={disabled} onValueChange={onValueChange} value={value}>
+      <SelectTrigger>
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
       <SelectContent>
         <SelectGroup>{children}</SelectGroup>
       </SelectContent>
@@ -129,13 +113,52 @@ function PayrollAmountInput({
         {payrollColumnLabels[fieldKey]}
       </FieldLabel>
       <Input
-        className="text-right tabular-nums"
+        className="text-right font-mono tabular-nums"
         id={`payroll-${fieldKey}`}
         inputMode="numeric"
         onChange={(event) => onChange(fieldKey, event.target.value)}
         value={String(row[fieldKey])}
       />
     </Field>
+  );
+}
+
+function SummaryCard({
+  label,
+  value,
+}: {
+  label: string;
+  value: number;
+}) {
+  return (
+    <div className="border border-border-card px-4 py-3">
+      <div className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
+        {label}
+      </div>
+      <div className="mt-2 font-mono text-xl font-semibold">{value}</div>
+    </div>
+  );
+}
+
+function StepIndicator({ current, total }: { current: number; total: number }) {
+  return (
+    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+      {Array.from({ length: total }, (_, i) => (
+        <span
+          key={i}
+          className={
+            i + 1 === current
+              ? "flex h-5 w-5 items-center justify-center border border-accent bg-accent text-accent-foreground text-[10px] font-bold"
+              : "flex h-5 w-5 items-center justify-center border border-border text-muted-foreground/40 text-[10px]"
+          }
+        >
+          {i + 1}
+        </span>
+      ))}
+      <span className="ml-1">
+        Step {current} of {total}
+      </span>
+    </div>
   );
 }
 
@@ -153,9 +176,12 @@ function AdminSchoolPicker({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Payroll</CardTitle>
+        <StepIndicator current={1} total={4} />
+        <CardTitle className="font-display text-lg font-bold mt-2">
+          Select School
+        </CardTitle>
         <CardDescription>
-          Select a school first, then manage employee payroll and annual statements.
+          Choose a school to manage its payroll records.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
@@ -175,7 +201,7 @@ function AdminSchoolPicker({
           </PayrollSelect>
         </Field>
         <div className="text-sm text-muted-foreground">
-          {isPending ? "Loading schools..." : `${schools.length} schools`}
+          {isPending ? "Loading..." : `${schools.length} schools`}
         </div>
       </CardContent>
     </Card>
@@ -186,9 +212,9 @@ function PayrollSelectionEmptyState() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Select a School</CardTitle>
+        <CardTitle className="font-display text-lg font-bold">Payroll</CardTitle>
         <CardDescription>
-          Payroll becomes available after a school is selected.
+          Select a school above to begin working with payroll records.
         </CardDescription>
       </CardHeader>
     </Card>
@@ -208,7 +234,7 @@ function PayrollErrorState({ message }: { message: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Unable to Load Payroll</CardTitle>
+        <CardTitle className="font-display text-lg font-bold">Unable to Load Payroll</CardTitle>
         <CardDescription>{message}</CardDescription>
       </CardHeader>
     </Card>
@@ -231,7 +257,10 @@ function PayrollSchoolSummary({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{payrollSchool.schoolName}</CardTitle>
+        <StepIndicator current={2} total={4} />
+        <CardTitle className="font-display text-lg font-bold mt-2">
+          {payrollSchool.schoolName}
+        </CardTitle>
         <CardDescription>
           Annual payroll ledger and statement setup for the selected school.
         </CardDescription>
@@ -241,28 +270,28 @@ function PayrollSchoolSummary({
           </Button>
         </CardAction>
       </CardHeader>
-      <CardContent className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-2">
+      <CardContent className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
             <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
               Principal
             </span>
-            <div className="text-sm">{payrollSchool.principalName}</div>
+            <div className="mt-0.5 text-sm">{payrollSchool.principalName}</div>
           </div>
-          <div className="flex flex-col gap-2">
+          <div>
             <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
               TAN No.
             </span>
-            <div className="text-sm">{payrollSchool.tanNo}</div>
+            <div className="mt-0.5 font-mono text-sm">{payrollSchool.tanNo}</div>
           </div>
-          <div className="flex flex-col gap-2 sm:col-span-2">
+          <div className="sm:col-span-2">
             <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
               Address
             </span>
-            <div className="text-sm">{payrollSchool.address}</div>
+            <div className="mt-0.5 text-sm">{payrollSchool.address}</div>
           </div>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2">
           <Field>
             <FieldLabel>Statement Start Month</FieldLabel>
             <PayrollSelect
@@ -277,11 +306,11 @@ function PayrollSchoolSummary({
               ))}
             </PayrollSelect>
           </Field>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col justify-end pb-2">
             <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
               Employees
             </span>
-            <div className="text-sm">{employeeCount} available</div>
+            <div className="mt-0.5 text-sm">{employeeCount} available</div>
           </div>
         </div>
       </CardContent>
@@ -293,7 +322,7 @@ function PayrollNoEmployeesState() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>No Employees</CardTitle>
+        <CardTitle className="font-display text-lg font-bold">No Employees</CardTitle>
         <CardDescription>
           Add employees before creating payroll rows for this school.
         </CardDescription>
@@ -302,7 +331,7 @@ function PayrollNoEmployeesState() {
   );
 }
 
-function PayrollFilterCard({
+function PayrollLedgerContextBar({
   effectiveEmployeeId,
   effectiveFinancialYear,
   employees,
@@ -322,51 +351,56 @@ function PayrollFilterCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Ledger Filters</CardTitle>
+        <StepIndicator current={3} total={4} />
+        <CardTitle className="font-display text-lg font-bold mt-2">
+          Employee &amp; Period
+        </CardTitle>
         <CardDescription>
-          Choose an employee and financial year before filling or downloading payroll.
+          Select the employee and financial year.
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-4 lg:grid-cols-4">
-        <Field>
-          <FieldLabel>Employee</FieldLabel>
-          <PayrollSelect
-            onValueChange={onEmployeeChange}
-            placeholder="Select employee"
-            value={effectiveEmployeeId || undefined}
-          >
-            {employees.map((employee) => (
-              <SelectItem key={employee.id} value={employee.id}>
-                {employee.fullName}
-              </SelectItem>
-            ))}
-          </PayrollSelect>
-        </Field>
-        <Field>
-          <FieldLabel>Financial Year</FieldLabel>
-          <PayrollSelect
-            onValueChange={onFinancialYearChange}
-            placeholder="Select financial year"
-            value={effectiveFinancialYear || undefined}
-          >
-            {financialYears.map((financialYear) => (
-              <SelectItem key={financialYear} value={financialYear}>
-                {financialYear}
-              </SelectItem>
-            ))}
-          </PayrollSelect>
-        </Field>
-        <div className="flex flex-col gap-2">
-          <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
-            Designation
-          </span>
-          <div className="text-sm">{selectedEmployee?.designation ?? "-"}</div>
-        </div>
-        <div className="flex flex-col gap-2">
-          <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
-            PAN Number
-          </span>
-          <div className="text-sm">{selectedEmployee?.panNumber ?? "-"}</div>
+      <CardContent>
+        <div className="grid gap-4 md:grid-cols-4">
+          <Field>
+            <FieldLabel>Employee</FieldLabel>
+            <PayrollSelect
+              onValueChange={onEmployeeChange}
+              placeholder="Select employee"
+              value={effectiveEmployeeId || undefined}
+            >
+              {employees.map((employee) => (
+                <SelectItem key={employee.id} value={employee.id}>
+                  {employee.fullName}
+                </SelectItem>
+              ))}
+            </PayrollSelect>
+          </Field>
+          <Field>
+            <FieldLabel>Financial Year</FieldLabel>
+            <PayrollSelect
+              onValueChange={onFinancialYearChange}
+              placeholder="Select financial year"
+              value={effectiveFinancialYear || undefined}
+            >
+              {financialYears.map((financialYear) => (
+                <SelectItem key={financialYear} value={financialYear}>
+                  {financialYear}
+                </SelectItem>
+              ))}
+            </PayrollSelect>
+          </Field>
+          <div className="flex flex-col justify-end pb-2">
+            <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
+              Designation
+            </span>
+            <div className="mt-0.5 text-sm">{selectedEmployee?.designation ?? "-"}</div>
+          </div>
+          <div className="flex flex-col justify-end pb-2">
+            <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
+              PAN Number
+            </span>
+            <div className="mt-0.5 font-mono text-sm">{selectedEmployee?.panNumber ?? "-"}</div>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -402,6 +436,7 @@ function PayrollMonthlyWorkspace({
   const [rows, setRows] = useState(initialRows);
   const [activePanel, setActivePanel] = useState<"fill" | "download" | null>(null);
   const [selectedMonth, setSelectedMonth] = useState("");
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const totals = useMemo(() => summarizePayrollRows(rows), [rows]);
   const monthlyRows = useMemo(
     () => rows.filter((row) => row.rowType === "month" && row.rowMonth !== null),
@@ -431,40 +466,29 @@ function PayrollMonthlyWorkspace({
         if (row.rowType !== "month" || row.rowMonth !== rowMonth) {
           return row;
         }
-
         const nextRow = {
           ...row,
           [field]: parseInteger(value),
         };
-
         return normalizeLedgerRow(nextRow);
       }),
     );
+    setSaveMessage(null);
   }
 
   function selectedMonthLabel() {
     return monthOptions.find((month) => month.value === selectedMonth)?.label ?? "";
   }
 
+  function handleSave() {
+    onSave(rows);
+    setSaveMessage("Saving...");
+    setTimeout(() => setSaveMessage("Saved"), 1000);
+    setTimeout(() => setSaveMessage(null), 3000);
+  }
+
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>Payroll Actions</CardTitle>
-          <CardDescription>
-            Fill one monthly payroll entry or download the employee payslip.
-          </CardDescription>
-          <CardAction className="flex flex-wrap gap-2">
-            <Button onClick={() => setActivePanel("fill")} size="sm">
-              Fill Monthly Payroll
-            </Button>
-            <Button onClick={() => setActivePanel("download")} size="sm" variant="outline">
-              Download Payslip
-            </Button>
-          </CardAction>
-        </CardHeader>
-      </Card>
-
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {summaryColumns.map((key) => (
           <SummaryCard
@@ -475,11 +499,39 @@ function PayrollMonthlyWorkspace({
         ))}
       </div>
 
+      <Card>
+        <CardHeader>
+          <StepIndicator current={4} total={4} />
+          <CardTitle className="font-display text-lg font-bold mt-2">
+            Payroll Actions
+          </CardTitle>
+          <CardDescription>
+            Fill monthly payroll entries or download payslips.
+          </CardDescription>
+          <CardAction className="flex flex-wrap gap-2">
+            <Button
+              onClick={() => setActivePanel(activePanel === "fill" ? null : "fill")}
+              size="sm"
+              variant={activePanel === "fill" ? "default" : "outline"}
+            >
+              Fill Monthly Payroll
+            </Button>
+            <Button
+              onClick={() => setActivePanel(activePanel === "download" ? null : "download")}
+              size="sm"
+              variant={activePanel === "download" ? "default" : "outline"}
+            >
+              Download Payslip
+            </Button>
+          </CardAction>
+        </CardHeader>
+      </Card>
+
       {isLoading ? <Skeleton className="h-96" /> : null}
       {loadError ? (
         <Card>
           <CardHeader>
-            <CardTitle>Unable to Load Ledger</CardTitle>
+            <CardTitle className="font-display text-lg font-bold">Unable to Load Ledger</CardTitle>
             <CardDescription>{loadError}</CardDescription>
           </CardHeader>
         </Card>
@@ -488,19 +540,12 @@ function PayrollMonthlyWorkspace({
       {activePanel === "fill" ? (
         <Card>
           <CardHeader>
-            <CardTitle>Monthly Payroll</CardTitle>
+            <CardTitle className="font-display text-base font-bold">
+              Monthly Payroll Entry
+            </CardTitle>
             <CardDescription>
-              Select one month and save only that month into the annual ledger.
+              Select a month, enter earnings and deductions, then save.
             </CardDescription>
-            <CardAction>
-              <Button
-                disabled={isSaving || !selectedMonthlyRow}
-                onClick={() => onSave(rows)}
-                size="sm"
-              >
-                {isSaving ? "Saving" : "Save"}
-              </Button>
-            </CardAction>
           </CardHeader>
           <CardContent>
             <FieldGroup className="gap-6">
@@ -533,8 +578,8 @@ function PayrollMonthlyWorkspace({
                   </div>
 
                   <div className="grid gap-8 lg:grid-cols-2">
-                    <FieldGroup className="gap-5 sm:grid sm:grid-cols-2">
-                      <div className="text-xs font-semibold tracking-wider uppercase text-muted-foreground sm:col-span-2">
+                    <FieldGroup className="gap-4 sm:grid sm:grid-cols-2">
+                      <div className="text-xs font-semibold tracking-wider uppercase text-muted-foreground border-b pb-1 sm:col-span-2">
                         Earnings
                       </div>
                       <PayrollAmountInput
@@ -556,8 +601,8 @@ function PayrollMonthlyWorkspace({
                       ))}
                     </FieldGroup>
 
-                    <FieldGroup className="gap-5 sm:grid sm:grid-cols-2">
-                      <div className="text-xs font-semibold tracking-wider uppercase text-muted-foreground sm:col-span-2">
+                    <FieldGroup className="gap-4 sm:grid sm:grid-cols-2">
+                      <div className="text-xs font-semibold tracking-wider uppercase text-muted-foreground border-b pb-1 sm:col-span-2">
                         Deductions
                       </div>
                       <PayrollAmountInput
@@ -582,9 +627,25 @@ function PayrollMonthlyWorkspace({
                 </>
               ) : null}
 
-              {saveError ? (
-                <p className="text-sm text-destructive">{saveError}</p>
-              ) : null}
+              <Separator />
+
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  {saveMessage ? (
+                    <span className="text-sm text-muted-foreground">{saveMessage}</span>
+                  ) : null}
+                  {saveError ? (
+                    <span className="text-sm text-destructive">{saveError}</span>
+                  ) : null}
+                </div>
+                <Button
+                  disabled={isSaving || !selectedMonthlyRow}
+                  onClick={handleSave}
+                  size="sm"
+                >
+                  {isSaving ? "Saving..." : "Save Month"}
+                </Button>
+              </div>
             </FieldGroup>
           </CardContent>
         </Card>
@@ -593,7 +654,9 @@ function PayrollMonthlyWorkspace({
       {activePanel === "download" ? (
         <Card>
           <CardHeader>
-            <CardTitle>Download Payslip</CardTitle>
+            <CardTitle className="font-display text-base font-bold">
+              Download Payslip
+            </CardTitle>
             <CardDescription>
               Download the full annual statement or a single monthly statement.
             </CardDescription>
@@ -672,7 +735,6 @@ export function PayrollWorkspace({ scope }: PayrollWorkspaceProps) {
     if (!payrollContext) {
       return "";
     }
-
     return payrollContext.employees.some(
       (employee) => employee.id === selectedEmployeeId,
     )
@@ -684,14 +746,12 @@ export function PayrollWorkspace({ scope }: PayrollWorkspaceProps) {
     if (!payrollContext) {
       return "";
     }
-
     if (
       selectedFinancialYear &&
       payrollContext.financialYears.includes(selectedFinancialYear)
     ) {
       return selectedFinancialYear;
     }
-
     return payrollContext.financialYears[0] ?? "";
   }, [payrollContext, selectedFinancialYear]);
 
@@ -820,7 +880,6 @@ export function PayrollWorkspace({ scope }: PayrollWorkspaceProps) {
     if (!payrollContext || !ledgerData || !selectedEmployee) {
       return;
     }
-
     await downloadPayrollPdf({
       school: payrollContext.school,
       employee: selectedEmployee,
@@ -837,7 +896,6 @@ export function PayrollWorkspace({ scope }: PayrollWorkspaceProps) {
     if (!payrollContext || !ledgerData || !selectedEmployee) {
       return;
     }
-
     await downloadPayrollPdf({
       school: payrollContext.school,
       employee: selectedEmployee,
@@ -851,7 +909,6 @@ export function PayrollWorkspace({ scope }: PayrollWorkspaceProps) {
   const ledgerEditorKey = useMemo(() => {
     const rowToken =
       ledgerData?.rows.map((row) => `${row.id}:${row.updatedAt}`).join("|") ?? "empty";
-
     return [
       selectedSchoolId || "current",
       effectiveEmployeeId,
@@ -868,15 +925,21 @@ export function PayrollWorkspace({ scope }: PayrollWorkspaceProps) {
   return (
     <div className="flex min-w-0 flex-col gap-6">
       {scope === "admin" ? (
-        <AdminSchoolPicker
-          isPending={isSchoolsPending}
-          onSchoolChange={handleSchoolChange}
-          schools={schoolsData?.schools ?? []}
-          selectedSchoolId={selectedSchoolId ?? ""}
-        />
+        <div className="animate-fade-in-up">
+          <AdminSchoolPicker
+            isPending={isSchoolsPending}
+            onSchoolChange={handleSchoolChange}
+            schools={schoolsData?.schools ?? []}
+            selectedSchoolId={selectedSchoolId ?? ""}
+          />
+        </div>
       ) : null}
 
-      {scope === "admin" && !selectedSchoolId ? <PayrollSelectionEmptyState /> : null}
+      {scope === "admin" && !selectedSchoolId ? (
+        <div className="animate-fade-in-up-delay-1">
+          <PayrollSelectionEmptyState />
+        </div>
+      ) : null}
 
       {(scope === "school" || selectedSchoolId) && isPayrollContextPending ? (
         <PayrollLoadingState />
@@ -887,7 +950,7 @@ export function PayrollWorkspace({ scope }: PayrollWorkspaceProps) {
       ) : null}
 
       {payrollContext ? (
-        <>
+        <div className="animate-fade-in-up-delay-1 flex min-w-0 flex-col gap-6">
           <PayrollSchoolSummary
             employeeCount={payrollContext.employees.length}
             onSaveSettings={() => saveSettingsMutation.mutate(statementStartMonth)}
@@ -902,10 +965,12 @@ export function PayrollWorkspace({ scope }: PayrollWorkspaceProps) {
           />
 
           {payrollContext.employees.length === 0 ? (
-            <PayrollNoEmployeesState />
+            <div className="animate-fade-in-up-delay-2">
+              <PayrollNoEmployeesState />
+            </div>
           ) : (
-            <>
-              <PayrollFilterCard
+            <div className="animate-fade-in-up-delay-2 flex min-w-0 flex-col gap-6">
+              <PayrollLedgerContextBar
                 effectiveEmployeeId={effectiveEmployeeId}
                 effectiveFinancialYear={effectiveFinancialYear}
                 employees={payrollContext.employees}
@@ -915,22 +980,24 @@ export function PayrollWorkspace({ scope }: PayrollWorkspaceProps) {
                 selectedEmployee={selectedEmployee}
               />
 
-              <PayrollMonthlyWorkspace
-                financialYear={effectiveFinancialYear}
-                initialRows={ledgerData?.rows ?? []}
-                isLoading={isLedgerPending}
-                isSaving={saveLedgerMutation.isPending}
-                key={ledgerEditorKey}
-                loadError={ledgerError?.message}
-                onDownloadAnnual={handleDownloadPdf}
-                onDownloadMonthly={handleDownloadMonthlyPdf}
-                onSave={saveLedgerMutation.mutate}
-                saveError={saveLedgerMutation.error?.message}
-                statementStartMonth={statementStartMonth}
-              />
-            </>
+              <div className="animate-fade-in-up-delay-3">
+                <PayrollMonthlyWorkspace
+                  financialYear={effectiveFinancialYear}
+                  initialRows={ledgerData?.rows ?? []}
+                  isLoading={isLedgerPending}
+                  isSaving={saveLedgerMutation.isPending}
+                  key={ledgerEditorKey}
+                  loadError={ledgerError?.message}
+                  onDownloadAnnual={handleDownloadPdf}
+                  onDownloadMonthly={handleDownloadMonthlyPdf}
+                  onSave={saveLedgerMutation.mutate}
+                  saveError={saveLedgerMutation.error?.message}
+                  statementStartMonth={statementStartMonth}
+                />
+              </div>
+            </div>
           )}
-        </>
+        </div>
       ) : null}
     </div>
   );

@@ -6,11 +6,13 @@ import {
   ArrowUpDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  Search01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
@@ -25,6 +27,7 @@ import {
 import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -54,6 +57,9 @@ type DataTableProps<TData, TValue> = {
   onSortingChange: (updater: Updater<SortingState>) => void;
   pagination: PaginationState;
   onPaginationChange: (updater: Updater<PaginationState>) => void;
+  searchValue?: string;
+  onSearchValueChange?: (value: string) => void;
+  searchPlaceholder?: string;
   renderToolbarEnd?: (table: TanStackTable<TData>) => ReactNode;
 };
 
@@ -110,21 +116,26 @@ export function DataTable<TData, TValue>({
   onSortingChange,
   pagination,
   onPaginationChange,
+  searchValue,
+  onSearchValueChange,
+  searchPlaceholder,
   renderToolbarEnd,
 }: DataTableProps<TData, TValue>) {
-  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,
     state: {
       sorting,
       pagination,
+      globalFilter: searchValue,
     },
     onSortingChange,
     onPaginationChange,
+    onGlobalFilterChange: onSearchValueChange,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
   });
 
   const pageCount = Math.max(1, table.getPageCount());
@@ -132,11 +143,27 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="flex flex-col gap-5">
-      {renderToolbarEnd ? (
-        <div className="flex items-center justify-end">
-          {renderToolbarEnd(table)}
-        </div>
-      ) : null}
+      <div className="flex items-center justify-between gap-4">
+        {searchValue !== undefined && onSearchValueChange ? (
+          <div className="relative max-w-64">
+            <HugeiconsIcon
+              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+              icon={Search01Icon}
+            />
+            <Input
+              className="pl-9"
+              onChange={(e) => onSearchValueChange(e.target.value)}
+              placeholder={searchPlaceholder ?? "Search..."}
+              value={searchValue}
+            />
+          </div>
+        ) : <div />}
+        {renderToolbarEnd ? (
+          <div className="flex items-center justify-end">
+            {renderToolbarEnd(table)}
+          </div>
+        ) : null}
+      </div>
 
       <div className="border border-border bg-background">
         <Table>

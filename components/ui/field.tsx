@@ -184,8 +184,9 @@ function FieldError({
   }
 
   const content = children ?? (() => {
+    const errorList = errors ?? []
     const uniqueErrors = [
-      ...new Map(errors.map((error) => [error?.message, error])).values(),
+      ...new Map(errorList.map((error) => [error?.message, error])).values(),
     ]
 
     if (uniqueErrors.length === 1) {

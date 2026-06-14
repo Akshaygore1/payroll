@@ -10,6 +10,7 @@ const segmentLabelMap: Record<string, string> = {
   school: "School Profile",
   employees: "Employees",
   payroll: "Payroll",
+  payslip: "Payslip",
 };
 
 export function getBreadcrumbSegments(pathname: string): BreadcrumbSegment[] {

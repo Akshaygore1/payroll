@@ -173,7 +173,9 @@ function resolveUpdater<T>(updater: Updater<T>, current: T): T {
   return updater;
 }
 
-function toEmployeeValues(employee: SchoolEmployeeRecord): SchoolEmployeeValues {
+function toEmployeeValues(
+  employee: SchoolEmployeeRecord,
+): SchoolEmployeeValues {
   return {
     fullName: employee.fullName,
     designation: employee.designation,
@@ -188,10 +190,7 @@ function toEmployeeValues(employee: SchoolEmployeeRecord): SchoolEmployeeValues 
 
 export default function SchoolEmployeesPage() {
   const queryClient = useQueryClient();
-  const [state, dispatch] = useReducer(
-    employeesReducer,
-    initialEmployeesState,
-  );
+  const [state, dispatch] = useReducer(employeesReducer, initialEmployeesState);
 
   const { data, error, isPending } = useQuery({
     queryKey: ["school", "employees"],
@@ -204,7 +203,9 @@ export default function SchoolEmployeesPage() {
     mutationFn: createSchoolEmployeeMutation,
     onSuccess: async () => {
       dispatch({ type: "createFinished" });
-      await queryClient.invalidateQueries({ queryKey: ["school", "employees"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["school", "employees"],
+      });
     },
   });
 
@@ -218,7 +219,9 @@ export default function SchoolEmployeesPage() {
     },
     onSuccess: async () => {
       dispatch({ type: "updateFinished" });
-      await queryClient.invalidateQueries({ queryKey: ["school", "employees"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["school", "employees"],
+      });
     },
   });
 
@@ -226,7 +229,9 @@ export default function SchoolEmployeesPage() {
     mutationFn: (id: string) => deleteSchoolEmployeeMutation(id),
     onSuccess: async () => {
       dispatch({ type: "deleteFinished" });
-      await queryClient.invalidateQueries({ queryKey: ["school", "employees"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["school", "employees"],
+      });
     },
   });
 
@@ -262,30 +267,6 @@ export default function SchoolEmployeesPage() {
       ),
     },
     {
-      accessorKey: "gpfNumber",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="GPF Number" />
-      ),
-    },
-    {
-      accessorKey: "pfNumber",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="PF Number" />
-      ),
-    },
-    {
-      accessorKey: "npsAccountNumber",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="NPS Account Number" />
-      ),
-    },
-    {
-      accessorKey: "whatsappNumber",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="WhatsApp Number" />
-      ),
-    },
-    {
       accessorKey: "contactNumber",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Contact Number" />
@@ -307,7 +288,9 @@ export default function SchoolEmployeesPage() {
           </Button>
           <Button
             aria-label={`Delete ${row.original.fullName}`}
-            onClick={() => dispatch({ type: "deleteStarted", employee: row.original })}
+            onClick={() =>
+              dispatch({ type: "deleteStarted", employee: row.original })
+            }
             size="icon-xs"
             type="button"
             variant="destructive"

@@ -82,7 +82,7 @@ function PayrollSelect({
   disabled?: boolean;
   onValueChange: (value: string) => void;
   placeholder: string;
-  value?: string;
+  value: string;
 }) {
   return (
     <Select disabled={disabled} onValueChange={onValueChange} value={value}>
@@ -163,7 +163,7 @@ function AdminSchoolPicker({
             disabled={isPending}
             onValueChange={onSchoolChange}
             placeholder="Select a school"
-            value={selectedSchoolId || undefined}
+            value={selectedSchoolId}
           >
             {schools.map((school) => (
               <SelectItem key={school.id} value={school.id}>
@@ -344,7 +344,7 @@ function PayrollLedgerContextBar({
             <PayrollSelect
               onValueChange={onEmployeeChange}
               placeholder="Select employee"
-              value={effectiveEmployeeId || undefined}
+              value={effectiveEmployeeId}
             >
               {employees.map((employee) => (
                 <SelectItem key={employee.id} value={employee.id}>
@@ -358,7 +358,7 @@ function PayrollLedgerContextBar({
             <PayrollSelect
               onValueChange={onFinancialYearChange}
               placeholder="Select financial year"
-              value={effectiveFinancialYear || undefined}
+              value={effectiveFinancialYear}
             >
               {financialYears.map((financialYear) => (
                 <SelectItem key={financialYear} value={financialYear}>
@@ -488,7 +488,7 @@ function PayrollMonthlyFillPanel({
               disabled={!monthOptions.length}
               onValueChange={onMonthChange}
               placeholder="Select month"
-              value={selectedMonth || undefined}
+              value={selectedMonth}
             >
               {monthOptions.map((month) => (
                 <SelectItem key={month.value} value={month.value}>
@@ -615,7 +615,7 @@ function PayrollMonthlyDownloadPanel({
               disabled={!monthOptions.length}
               onValueChange={onMonthChange}
               placeholder="Select month"
-              value={selectedMonth || undefined}
+              value={selectedMonth}
             >
               {monthOptions.map((month) => (
                 <SelectItem key={month.value} value={month.value}>

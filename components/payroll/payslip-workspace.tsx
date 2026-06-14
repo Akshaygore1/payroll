@@ -208,6 +208,9 @@ function PayslipDownloadCard({
   isDownloadDisabled: boolean;
   isLedgerLoading: boolean;
 }) {
+  const showLedgerLoadingMessage =
+    isLedgerLoading && Boolean(selectedEmployeeId) && Boolean(selectedFinancialYear);
+
   return (
     <Card>
       <CardHeader>
@@ -303,7 +306,7 @@ function PayslipDownloadCard({
 
           <div className="flex items-center justify-between gap-4">
             <div className="text-sm text-muted-foreground">
-              {isLedgerLoading
+              {showLedgerLoadingMessage
                 ? "Loading payslip data..."
                 : "Choose the required filters, then download the PDF."}
             </div>

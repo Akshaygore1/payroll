@@ -60,7 +60,7 @@ afterEach(() => {
 });
 
 describe("AppSidebar", () => {
-  it("links the admin payroll nav entry to the payslip route", () => {
+  it("links the admin payroll and payslip nav entries to their routes", () => {
     mockUsePathname.mockReturnValue("/payslip");
 
     render(
@@ -69,13 +69,17 @@ describe("AppSidebar", () => {
       />,
     );
 
+    expect(screen.getByRole("link", { name: "Payroll" })).toHaveAttribute(
+      "href",
+      "/payroll",
+    );
     expect(screen.getByRole("link", { name: "Payslip" })).toHaveAttribute(
       "href",
       "/payslip",
     );
   });
 
-  it("links the school payroll nav entry to the school payslip route", () => {
+  it("links the school payroll and payslip nav entries to their routes", () => {
     mockUsePathname.mockReturnValue("/school/payslip");
 
     render(
@@ -84,6 +88,10 @@ describe("AppSidebar", () => {
       />,
     );
 
+    expect(screen.getByRole("link", { name: "Payroll" })).toHaveAttribute(
+      "href",
+      "/school/payroll",
+    );
     expect(screen.getByRole("link", { name: "Payslip" })).toHaveAttribute(
       "href",
       "/school/payslip",

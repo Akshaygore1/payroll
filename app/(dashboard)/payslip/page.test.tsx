@@ -485,6 +485,7 @@ describe("Payslip pages", () => {
     renderWithQueryClient(<SchoolPayslipPage />);
 
     expect(screen.queryByRole("combobox", { name: "School" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Loading payslip data...")).not.toBeInTheDocument();
 
     const downloadButton = await screen.findByRole("button", { name: "Download" });
 

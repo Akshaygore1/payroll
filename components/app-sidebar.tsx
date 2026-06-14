@@ -28,12 +28,14 @@ import { APP_NAME } from "@/lib/app-config";
 const adminItems = [
   { title: "Dashboard", url: "/dashboard", icon: DashboardSquare01Icon },
   { title: "Schools", url: "/schools", icon: School01Icon },
+  { title: "Payroll", url: "/payroll", icon: Invoice03Icon },
   { title: "Payslip", url: "/payslip", icon: Invoice03Icon },
 ];
 
 const schoolItems = [
   { title: "School", url: "/school", icon: School01Icon },
   { title: "Employees", url: "/school/employees", icon: UserGroupIcon },
+  { title: "Payroll", url: "/school/payroll", icon: Invoice03Icon },
   { title: "Payslip", url: "/school/payslip", icon: Invoice03Icon },
 ];
 

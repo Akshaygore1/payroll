@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 
 import { PageHeader } from "@/components/page-header";
-import { getDefaultPathForRole, requireSession } from "@/lib/auth/session";
+import { getDefaultPathForRole } from "@/lib/auth/roles";
+import { requireSession } from "@/lib/auth/session";
 
 export default async function DashboardPage() {
   const session = await requireSession();

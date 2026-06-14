@@ -64,6 +64,7 @@ type PayrollWorkspaceProps = {
 type PayrollContextData = Awaited<ReturnType<typeof getPayrollContextQuery>>;
 type PayrollSchool = PayrollContextData["school"];
 type PayrollEmployee = PayrollContextData["employees"][number];
+type PayrollMonthOption = { label: string; value: string };
 
 function parseInteger(value: string) {
   const parsed = Number.parseInt(value, 10);
@@ -388,6 +389,263 @@ function PayrollLedgerContextBar({
   );
 }
 
+function PayrollMonthlySummaryCards({
+  rows,
+}: {
+  rows: PayrollLedgerRowRecord[];
+}) {
+  const totals = useMemo(() => summarizePayrollRows(rows), [rows]);
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {summaryColumns.map((key) => (
+        <SummaryCard
+          key={key}
+          label={payrollColumnLabels[key]}
+          value={totals[key]}
+        />
+      ))}
+    </div>
+  );
+}
+
+function PayrollMonthlyActionsCard({
+  activePanel,
+  onPanelChange,
+}: {
+  activePanel: "fill" | "download" | null;
+  onPanelChange: (panel: "fill" | "download") => void;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-display text-lg font-bold mt-2">
+          Payroll Actions
+        </CardTitle>
+        <CardDescription>
+          Fill monthly payroll entries or download payslips.
+        </CardDescription>
+        <CardAction className="flex flex-wrap gap-2">
+          <Button
+            onClick={() => onPanelChange("fill")}
+            size="sm"
+            variant={activePanel === "fill" ? "default" : "outline"}
+          >
+            Fill Monthly Payroll
+          </Button>
+          <Button
+            onClick={() => onPanelChange("download")}
+            size="sm"
+            variant={activePanel === "download" ? "default" : "outline"}
+          >
+            Download Payslip
+          </Button>
+        </CardAction>
+      </CardHeader>
+    </Card>
+  );
+}
+
+function PayrollMonthlyFillPanel({
+  isSaving,
+  monthOptions,
+  onMonthChange,
+  onRowChange,
+  onSave,
+  saveError,
+  saveMessage,
+  selectedMonth,
+  selectedMonthlyRow,
+}: {
+  isSaving: boolean;
+  monthOptions: PayrollMonthOption[];
+  onMonthChange: (value: string) => void;
+  onRowChange: (
+    field: (typeof payrollAmountFieldKeys)[number],
+    value: string,
+  ) => void;
+  onSave: () => void;
+  saveError?: string;
+  saveMessage: string | null;
+  selectedMonth: string;
+  selectedMonthlyRow: PayrollLedgerRowRecord | null;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-display text-base font-bold">
+          Monthly Payroll Entry
+        </CardTitle>
+        <CardDescription>
+          Select a month, enter earnings and deductions, then save.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <FieldGroup className="gap-6">
+          <Field>
+            <FieldLabel>Select Month</FieldLabel>
+            <PayrollSelect
+              disabled={!monthOptions.length}
+              onValueChange={onMonthChange}
+              placeholder="Select month"
+              value={selectedMonth || undefined}
+            >
+              {monthOptions.map((month) => (
+                <SelectItem key={month.value} value={month.value}>
+                  {month.label}
+                </SelectItem>
+              ))}
+            </PayrollSelect>
+          </Field>
+
+          {selectedMonthlyRow ? (
+            <>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                {summaryColumns.map((key) => (
+                  <SummaryCard
+                    key={key}
+                    label={payrollColumnLabels[key]}
+                    value={selectedMonthlyRow[key]}
+                  />
+                ))}
+              </div>
+
+              <div className="grid gap-8 lg:grid-cols-2">
+                <FieldGroup className="gap-4 sm:grid sm:grid-cols-2">
+                  <div className="text-xs font-semibold tracking-wider uppercase text-muted-foreground border-b pb-1 sm:col-span-2">
+                    Earnings
+                  </div>
+                  <PayrollAmountInput
+                    fieldKey="basicPay"
+                    onChange={onRowChange}
+                    row={selectedMonthlyRow}
+                  />
+                  {earningFieldKeys.map((key) => (
+                    <PayrollAmountInput
+                      fieldKey={key}
+                      key={key}
+                      onChange={onRowChange}
+                      row={selectedMonthlyRow}
+                    />
+                  ))}
+                </FieldGroup>
+
+                <FieldGroup className="gap-4 sm:grid sm:grid-cols-2">
+                  <div className="text-xs font-semibold tracking-wider uppercase text-muted-foreground border-b pb-1 sm:col-span-2">
+                    Deductions
+                  </div>
+                  <PayrollAmountInput
+                    fieldKey="recovery"
+                    onChange={onRowChange}
+                    row={selectedMonthlyRow}
+                  />
+                  {deductionFieldKeys.map((key) => (
+                    <PayrollAmountInput
+                      fieldKey={key}
+                      key={key}
+                      onChange={onRowChange}
+                      row={selectedMonthlyRow}
+                    />
+                  ))}
+                </FieldGroup>
+              </div>
+            </>
+          ) : null}
+
+          <Separator />
+
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              {saveMessage ? (
+                <span className="text-sm text-muted-foreground">
+                  {saveMessage}
+                </span>
+              ) : null}
+              {saveError ? (
+                <span className="text-sm text-destructive">{saveError}</span>
+              ) : null}
+            </div>
+            <Button disabled={isSaving || !selectedMonthlyRow} onClick={onSave} size="sm">
+              {isSaving ? "Saving..." : "Save Month"}
+            </Button>
+          </div>
+        </FieldGroup>
+      </CardContent>
+    </Card>
+  );
+}
+
+function PayrollMonthlyDownloadPanel({
+  monthOptions,
+  onDownloadAnnual,
+  onDownloadMonthly,
+  onMonthChange,
+  rows,
+  selectedMonth,
+  selectedMonthLabel,
+  selectedMonthlyRow,
+}: {
+  monthOptions: PayrollMonthOption[];
+  onDownloadAnnual: (rows: PayrollLedgerRowRecord[]) => Promise<void>;
+  onDownloadMonthly: (
+    rows: PayrollLedgerRowRecord[],
+    monthLabel: string,
+  ) => Promise<void>;
+  onMonthChange: (value: string) => void;
+  rows: PayrollLedgerRowRecord[];
+  selectedMonth: string;
+  selectedMonthLabel: string;
+  selectedMonthlyRow: PayrollLedgerRowRecord | null;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-display text-base font-bold">
+          Download Payslip
+        </CardTitle>
+        <CardDescription>
+          Download the full annual statement or a single monthly statement.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <FieldGroup className="gap-6">
+          <Field>
+            <FieldLabel>Payroll Month</FieldLabel>
+            <PayrollSelect
+              disabled={!monthOptions.length}
+              onValueChange={onMonthChange}
+              placeholder="Select month"
+              value={selectedMonth || undefined}
+            >
+              {monthOptions.map((month) => (
+                <SelectItem key={month.value} value={month.value}>
+                  {month.label}
+                </SelectItem>
+              ))}
+            </PayrollSelect>
+          </Field>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              disabled={!selectedMonthlyRow}
+              onClick={() =>
+                selectedMonthlyRow
+                  ? onDownloadMonthly([selectedMonthlyRow], selectedMonthLabel)
+                  : undefined
+              }
+              variant="outline"
+            >
+              Download Monthly
+            </Button>
+            <Button disabled={!rows.length} onClick={() => onDownloadAnnual(rows)}>
+              Download Annual
+            </Button>
+          </div>
+        </FieldGroup>
+      </CardContent>
+    </Card>
+  );
+}
+
 function PayrollMonthlyWorkspace({
   initialRows,
   financialYear,
@@ -420,7 +678,6 @@ function PayrollMonthlyWorkspace({
   );
   const [selectedMonth, setSelectedMonth] = useState("");
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
-  const totals = useMemo(() => summarizePayrollRows(rows), [rows]);
   const monthlyRows = useMemo(
     () =>
       rows.filter((row) => row.rowType === "month" && row.rowMonth !== null),
@@ -432,7 +689,7 @@ function PayrollMonthlyWorkspace({
     [monthlyRows, selectedMonth],
   );
 
-  const monthOptions = useMemo(
+  const monthOptions = useMemo<PayrollMonthOption[]>(
     () =>
       monthlyRows.map((row) => ({
         label: getRowPeriodLabel(financialYear, statementStartMonth, row),
@@ -461,11 +718,8 @@ function PayrollMonthlyWorkspace({
     setSaveMessage(null);
   }
 
-  function selectedMonthLabel() {
-    return (
-      monthOptions.find((month) => month.value === selectedMonth)?.label ?? ""
-    );
-  }
+  const selectedMonthLabel =
+    monthOptions.find((month) => month.value === selectedMonth)?.label ?? "";
 
   function handleSave() {
     onSave(rows);
@@ -474,48 +728,29 @@ function PayrollMonthlyWorkspace({
     setTimeout(() => setSaveMessage(null), 3000);
   }
 
+  function handlePanelChange(panel: "fill" | "download") {
+    setActivePanel((currentPanel) => (currentPanel === panel ? null : panel));
+  }
+
+  function handleSelectedRowChange(
+    field: (typeof payrollAmountFieldKeys)[number],
+    value: string,
+  ) {
+    if (!selectedMonthlyRow?.rowMonth) {
+      return;
+    }
+
+    updateRow(selectedMonthlyRow.rowMonth, field, value);
+  }
+
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {summaryColumns.map((key) => (
-          <SummaryCard
-            key={key}
-            label={payrollColumnLabels[key]}
-            value={totals[key]}
-          />
-        ))}
-      </div>
+      <PayrollMonthlySummaryCards rows={rows} />
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-display text-lg font-bold mt-2">
-            Payroll Actions
-          </CardTitle>
-          <CardDescription>
-            Fill monthly payroll entries or download payslips.
-          </CardDescription>
-          <CardAction className="flex flex-wrap gap-2">
-            <Button
-              onClick={() =>
-                setActivePanel(activePanel === "fill" ? null : "fill")
-              }
-              size="sm"
-              variant={activePanel === "fill" ? "default" : "outline"}
-            >
-              Fill Monthly Payroll
-            </Button>
-            <Button
-              onClick={() =>
-                setActivePanel(activePanel === "download" ? null : "download")
-              }
-              size="sm"
-              variant={activePanel === "download" ? "default" : "outline"}
-            >
-              Download Payslip
-            </Button>
-          </CardAction>
-        </CardHeader>
-      </Card>
+      <PayrollMonthlyActionsCard
+        activePanel={activePanel}
+        onPanelChange={handlePanelChange}
+      />
 
       {isLoading ? <Skeleton className="h-96" /> : null}
       {loadError ? (
@@ -530,193 +765,158 @@ function PayrollMonthlyWorkspace({
       ) : null}
 
       {activePanel === "fill" ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-display text-base font-bold">
-              Monthly Payroll Entry
-            </CardTitle>
-            <CardDescription>
-              Select a month, enter earnings and deductions, then save.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <FieldGroup className="gap-6">
-              <Field>
-                <FieldLabel>Select Month</FieldLabel>
-                <PayrollSelect
-                  disabled={!monthOptions.length}
-                  onValueChange={setSelectedMonth}
-                  placeholder="Select month"
-                  value={selectedMonth || undefined}
-                >
-                  {monthOptions.map((month) => (
-                    <SelectItem key={month.value} value={month.value}>
-                      {month.label}
-                    </SelectItem>
-                  ))}
-                </PayrollSelect>
-              </Field>
-
-              {selectedMonthlyRow ? (
-                <>
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    {summaryColumns.map((key) => (
-                      <SummaryCard
-                        key={key}
-                        label={payrollColumnLabels[key]}
-                        value={selectedMonthlyRow[key]}
-                      />
-                    ))}
-                  </div>
-
-                  <div className="grid gap-8 lg:grid-cols-2">
-                    <FieldGroup className="gap-4 sm:grid sm:grid-cols-2">
-                      <div className="text-xs font-semibold tracking-wider uppercase text-muted-foreground border-b pb-1 sm:col-span-2">
-                        Earnings
-                      </div>
-                      <PayrollAmountInput
-                        fieldKey="basicPay"
-                        onChange={(field, value) =>
-                          updateRow(
-                            selectedMonthlyRow.rowMonth ?? 0,
-                            field,
-                            value,
-                          )
-                        }
-                        row={selectedMonthlyRow}
-                      />
-                      {earningFieldKeys.map((key) => (
-                        <PayrollAmountInput
-                          fieldKey={key}
-                          key={key}
-                          onChange={(field, value) =>
-                            updateRow(
-                              selectedMonthlyRow.rowMonth ?? 0,
-                              field,
-                              value,
-                            )
-                          }
-                          row={selectedMonthlyRow}
-                        />
-                      ))}
-                    </FieldGroup>
-
-                    <FieldGroup className="gap-4 sm:grid sm:grid-cols-2">
-                      <div className="text-xs font-semibold tracking-wider uppercase text-muted-foreground border-b pb-1 sm:col-span-2">
-                        Deductions
-                      </div>
-                      <PayrollAmountInput
-                        fieldKey="recovery"
-                        onChange={(field, value) =>
-                          updateRow(
-                            selectedMonthlyRow.rowMonth ?? 0,
-                            field,
-                            value,
-                          )
-                        }
-                        row={selectedMonthlyRow}
-                      />
-                      {deductionFieldKeys.map((key) => (
-                        <PayrollAmountInput
-                          fieldKey={key}
-                          key={key}
-                          onChange={(field, value) =>
-                            updateRow(
-                              selectedMonthlyRow.rowMonth ?? 0,
-                              field,
-                              value,
-                            )
-                          }
-                          row={selectedMonthlyRow}
-                        />
-                      ))}
-                    </FieldGroup>
-                  </div>
-                </>
-              ) : null}
-
-              <Separator />
-
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  {saveMessage ? (
-                    <span className="text-sm text-muted-foreground">
-                      {saveMessage}
-                    </span>
-                  ) : null}
-                  {saveError ? (
-                    <span className="text-sm text-destructive">
-                      {saveError}
-                    </span>
-                  ) : null}
-                </div>
-                <Button
-                  disabled={isSaving || !selectedMonthlyRow}
-                  onClick={handleSave}
-                  size="sm"
-                >
-                  {isSaving ? "Saving..." : "Save Month"}
-                </Button>
-              </div>
-            </FieldGroup>
-          </CardContent>
-        </Card>
+        <PayrollMonthlyFillPanel
+          isSaving={isSaving}
+          monthOptions={monthOptions}
+          onMonthChange={setSelectedMonth}
+          onRowChange={handleSelectedRowChange}
+          onSave={handleSave}
+          saveError={saveError}
+          saveMessage={saveMessage}
+          selectedMonth={selectedMonth}
+          selectedMonthlyRow={selectedMonthlyRow}
+        />
       ) : null}
 
       {activePanel === "download" ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-display text-base font-bold">
-              Download Payslip
-            </CardTitle>
-            <CardDescription>
-              Download the full annual statement or a single monthly statement.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <FieldGroup className="gap-6">
-              <Field>
-                <FieldLabel>Payroll Month</FieldLabel>
-                <PayrollSelect
-                  disabled={!monthOptions.length}
-                  onValueChange={setSelectedMonth}
-                  placeholder="Select month"
-                  value={selectedMonth || undefined}
-                >
-                  {monthOptions.map((month) => (
-                    <SelectItem key={month.value} value={month.value}>
-                      {month.label}
-                    </SelectItem>
-                  ))}
-                </PayrollSelect>
-              </Field>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  disabled={!selectedMonthlyRow}
-                  onClick={() =>
-                    selectedMonthlyRow
-                      ? onDownloadMonthly(
-                          [selectedMonthlyRow],
-                          selectedMonthLabel(),
-                        )
-                      : undefined
-                  }
-                  variant="outline"
-                >
-                  Download Monthly
-                </Button>
-                <Button
-                  disabled={!rows.length}
-                  onClick={() => onDownloadAnnual(rows)}
-                >
-                  Download Annual
-                </Button>
-              </div>
-            </FieldGroup>
-          </CardContent>
-        </Card>
+        <PayrollMonthlyDownloadPanel
+          monthOptions={monthOptions}
+          onDownloadAnnual={onDownloadAnnual}
+          onDownloadMonthly={onDownloadMonthly}
+          onMonthChange={setSelectedMonth}
+          rows={rows}
+          selectedMonth={selectedMonth}
+          selectedMonthLabel={selectedMonthLabel}
+          selectedMonthlyRow={selectedMonthlyRow}
+        />
       ) : null}
     </>
+  );
+}
+
+function PayrollWorkspaceAdminSection({
+  isSchoolsPending,
+  onSchoolChange,
+  scope,
+  schools,
+  selectedSchoolId,
+}: {
+  isSchoolsPending: boolean;
+  onSchoolChange: (value: string) => void;
+  scope: PayrollWorkspaceProps["scope"];
+  schools: Awaited<ReturnType<typeof listSchoolsQuery>>["schools"];
+  selectedSchoolId: string;
+}) {
+  return (
+    <>
+      {scope === "admin" ? (
+        <div className="animate-fade-in-up">
+          <AdminSchoolPicker
+            isPending={isSchoolsPending}
+            onSchoolChange={onSchoolChange}
+            schools={schools}
+            selectedSchoolId={selectedSchoolId}
+          />
+        </div>
+      ) : null}
+
+      {scope === "admin" && !selectedSchoolId ? (
+        <div className="animate-fade-in-up-delay-1">
+          <PayrollSelectionEmptyState />
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+function PayrollWorkspaceContent({
+  effectiveEmployeeId,
+  effectiveFinancialYear,
+  isLedgerPending,
+  ledgerData,
+  ledgerEditorKey,
+  ledgerError,
+  onDownloadAnnual,
+  onDownloadMonthly,
+  onEmployeeChange,
+  onFinancialYearChange,
+  onSaveRows,
+  onSaveSettings,
+  onStatementMonthChange,
+  payrollContext,
+  saveError,
+  selectedEmployee,
+  statementStartMonth,
+  isSaving,
+}: {
+  effectiveEmployeeId: string;
+  effectiveFinancialYear: string;
+  isLedgerPending: boolean;
+  ledgerData:
+    | Awaited<ReturnType<typeof getPayrollLedgerQuery>>
+    | undefined;
+  ledgerEditorKey: string;
+  ledgerError?: Error | null;
+  onDownloadAnnual: (rows: PayrollLedgerRowRecord[]) => Promise<void>;
+  onDownloadMonthly: (
+    rows: PayrollLedgerRowRecord[],
+    monthLabel: string,
+  ) => Promise<void>;
+  onEmployeeChange: (value: string) => void;
+  onFinancialYearChange: (value: string) => void;
+  onSaveRows: (rows: PayrollLedgerRowRecord[]) => void;
+  onSaveSettings: () => void;
+  onStatementMonthChange: (value: string) => void;
+  payrollContext: PayrollContextData;
+  saveError?: string;
+  selectedEmployee: PayrollEmployee | null;
+  statementStartMonth: number;
+  isSaving: boolean;
+}) {
+  return (
+    <div className="animate-fade-in-up-delay-1 flex min-w-0 flex-col gap-6">
+      <PayrollSchoolSummary
+        employeeCount={payrollContext.employees.length}
+        onSaveSettings={onSaveSettings}
+        onStatementMonthChange={onStatementMonthChange}
+        payrollSchool={payrollContext.school}
+        statementStartMonth={statementStartMonth}
+      />
+
+      {payrollContext.employees.length === 0 ? (
+        <div className="animate-fade-in-up-delay-2">
+          <PayrollNoEmployeesState />
+        </div>
+      ) : (
+        <div className="animate-fade-in-up-delay-2 flex min-w-0 flex-col gap-6">
+          <PayrollLedgerContextBar
+            effectiveEmployeeId={effectiveEmployeeId}
+            effectiveFinancialYear={effectiveFinancialYear}
+            employees={payrollContext.employees}
+            financialYears={payrollContext.financialYears}
+            onEmployeeChange={onEmployeeChange}
+            onFinancialYearChange={onFinancialYearChange}
+            selectedEmployee={selectedEmployee}
+          />
+
+          <div className="animate-fade-in-up-delay-3">
+            <PayrollMonthlyWorkspace
+              financialYear={effectiveFinancialYear}
+              initialRows={ledgerData?.rows ?? []}
+              isLoading={isLedgerPending}
+              isSaving={isSaving}
+              key={ledgerEditorKey}
+              loadError={ledgerError?.message}
+              onDownloadAnnual={onDownloadAnnual}
+              onDownloadMonthly={onDownloadMonthly}
+              onSave={onSaveRows}
+              saveError={saveError}
+              statementStartMonth={statementStartMonth}
+            />
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -944,22 +1144,13 @@ export function PayrollWorkspace({ scope }: PayrollWorkspaceProps) {
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
-      {scope === "admin" ? (
-        <div className="animate-fade-in-up">
-          <AdminSchoolPicker
-            isPending={isSchoolsPending}
-            onSchoolChange={handleSchoolChange}
-            schools={schoolsData?.schools ?? []}
-            selectedSchoolId={selectedSchoolId ?? ""}
-          />
-        </div>
-      ) : null}
-
-      {scope === "admin" && !selectedSchoolId ? (
-        <div className="animate-fade-in-up-delay-1">
-          <PayrollSelectionEmptyState />
-        </div>
-      ) : null}
+      <PayrollWorkspaceAdminSection
+        isSchoolsPending={isSchoolsPending}
+        onSchoolChange={handleSchoolChange}
+        scope={scope}
+        schools={schoolsData?.schools ?? []}
+        selectedSchoolId={selectedSchoolId ?? ""}
+      />
 
       {(scope === "school" || selectedSchoolId) && isPayrollContextPending ? (
         <PayrollLoadingState />
@@ -970,56 +1161,31 @@ export function PayrollWorkspace({ scope }: PayrollWorkspaceProps) {
       ) : null}
 
       {payrollContext ? (
-        <div className="animate-fade-in-up-delay-1 flex min-w-0 flex-col gap-6">
-          <PayrollSchoolSummary
-            employeeCount={payrollContext.employees.length}
-            onSaveSettings={() =>
-              saveSettingsMutation.mutate(statementStartMonth)
-            }
-            onStatementMonthChange={(value) =>
-              setStatementStartMonthDraft({
-                schoolId: payrollContext.school.id,
-                value: Number(value),
-              })
-            }
-            payrollSchool={payrollContext.school}
-            statementStartMonth={statementStartMonth}
-          />
-
-          {payrollContext.employees.length === 0 ? (
-            <div className="animate-fade-in-up-delay-2">
-              <PayrollNoEmployeesState />
-            </div>
-          ) : (
-            <div className="animate-fade-in-up-delay-2 flex min-w-0 flex-col gap-6">
-              <PayrollLedgerContextBar
-                effectiveEmployeeId={effectiveEmployeeId}
-                effectiveFinancialYear={effectiveFinancialYear}
-                employees={payrollContext.employees}
-                financialYears={payrollContext.financialYears}
-                onEmployeeChange={setSelectedEmployeeId}
-                onFinancialYearChange={setSelectedFinancialYear}
-                selectedEmployee={selectedEmployee}
-              />
-
-              <div className="animate-fade-in-up-delay-3">
-                <PayrollMonthlyWorkspace
-                  financialYear={effectiveFinancialYear}
-                  initialRows={ledgerData?.rows ?? []}
-                  isLoading={isLedgerPending}
-                  isSaving={saveLedgerMutation.isPending}
-                  key={ledgerEditorKey}
-                  loadError={ledgerError?.message}
-                  onDownloadAnnual={handleDownloadPdf}
-                  onDownloadMonthly={handleDownloadMonthlyPdf}
-                  onSave={saveLedgerMutation.mutate}
-                  saveError={saveLedgerMutation.error?.message}
-                  statementStartMonth={statementStartMonth}
-                />
-              </div>
-            </div>
-          )}
-        </div>
+        <PayrollWorkspaceContent
+          effectiveEmployeeId={effectiveEmployeeId}
+          effectiveFinancialYear={effectiveFinancialYear}
+          isLedgerPending={isLedgerPending}
+          isSaving={saveLedgerMutation.isPending}
+          ledgerData={ledgerData}
+          ledgerEditorKey={ledgerEditorKey}
+          ledgerError={ledgerError}
+          onDownloadAnnual={handleDownloadPdf}
+          onDownloadMonthly={handleDownloadMonthlyPdf}
+          onEmployeeChange={setSelectedEmployeeId}
+          onFinancialYearChange={setSelectedFinancialYear}
+          onSaveRows={saveLedgerMutation.mutate}
+          onSaveSettings={() => saveSettingsMutation.mutate(statementStartMonth)}
+          onStatementMonthChange={(value) =>
+            setStatementStartMonthDraft({
+              schoolId: payrollContext.school.id,
+              value: Number(value),
+            })
+          }
+          payrollContext={payrollContext}
+          saveError={saveLedgerMutation.error?.message}
+          selectedEmployee={selectedEmployee}
+          statementStartMonth={statementStartMonth}
+        />
       ) : null}
     </div>
   );

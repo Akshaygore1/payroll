@@ -2,9 +2,8 @@ import { redirect } from "next/navigation";
 
 import { SignInForm } from "@/components/auth/sign-in-form";
 import { APP_NAME } from "@/lib/app-config";
-import { getDefaultPathForRole, getSession } from "@/lib/auth/session";
-
-export const dynamic = "force-dynamic";
+import { getDefaultPathForRole } from "@/lib/auth/roles";
+import { getSession } from "@/lib/auth/session";
 
 export default async function SignInPage() {
   const session = await getSession();

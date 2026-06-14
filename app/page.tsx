@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
-import { getDefaultPathForRole, getSession } from "@/lib/auth/session";
+import { getDefaultPathForRole } from "@/lib/auth/roles";
+import { getSession } from "@/lib/auth/session";
 
 export default async function Home() {
   const session = await getSession();

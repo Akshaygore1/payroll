@@ -93,7 +93,7 @@ describe("SchoolsPage", () => {
     const link = await screen.findByRole("link", { name: "Riverdale High" });
 
     expect(link).toHaveAttribute("href", "/schools/school-1");
-    expect(screen.getByText("Active")).toBeInTheDocument();
-    expect(screen.getByText("No Login")).toBeInTheDocument();
+    expect(screen.getAllByText("Active")).toHaveLength(2);
+    expect(screen.getAllByText("No Login")).toHaveLength(2);
   });
 });

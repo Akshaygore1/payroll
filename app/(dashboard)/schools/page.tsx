@@ -15,9 +15,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { DataTable, DataTableColumnHeader } from "@/components/ui/data-table";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -124,7 +121,7 @@ export default function SchoolsPage() {
             Active
           </div>
           <div className="mt-1 font-mono text-xl font-bold text-accent">
-            {isPending ? <Skeleton className="h-6 w-8" /> : stats.active}
+            {isPending ? <Skeleton className="h-6 w-8" /> : active}
           </div>
         </div>
         <div className="border border-border-card px-4 py-3">
@@ -132,7 +129,7 @@ export default function SchoolsPage() {
             Inactive
           </div>
           <div className="mt-1 font-mono text-xl font-bold text-destructive">
-            {isPending ? <Skeleton className="h-6 w-8" /> : stats.inactive}
+            {isPending ? <Skeleton className="h-6 w-8" /> : inactive}
           </div>
         </div>
         <div className="border border-border-card px-4 py-3">
@@ -140,7 +137,7 @@ export default function SchoolsPage() {
             No Login
           </div>
           <div className="mt-1 font-mono text-xl font-bold text-muted-foreground">
-            {isPending ? <Skeleton className="h-6 w-8" /> : stats.noLogin}
+            {isPending ? <Skeleton className="h-6 w-8" /> : noLogin}
           </div>
         </div>
       </div>

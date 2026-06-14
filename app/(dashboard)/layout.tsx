@@ -5,8 +5,6 @@ import { DashboardShellHeader } from "@/components/dashboard-shell-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { requireSession } from "@/lib/auth/session";
 
-export const dynamic = "force-dynamic";
-
 export default async function DashboardLayout({
   children,
 }: {

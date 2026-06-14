@@ -81,30 +81,33 @@ function AdminSchoolPicker({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="mt-2 font-display text-lg font-bold">
-          Select School
-        </CardTitle>
-        <CardDescription>
-          Choose a school before downloading employee payslips.
-        </CardDescription>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <CardTitle className="font-display text-lg font-bold">
+              Select School
+            </CardTitle>
+            <CardDescription>
+              Choose a school before downloading employee payslips.
+            </CardDescription>
+          </div>
+          <Field className="w-fit shrink-0">
+            <WorkspaceSelect
+              ariaLabel="School"
+              disabled={isPending}
+              onValueChange={onSchoolChange}
+              placeholder="Select a school"
+              value={selectedSchoolId}
+            >
+              {schools.map((school) => (
+                <SelectItem key={school.id} value={school.id}>
+                  {school.schoolName}
+                </SelectItem>
+              ))}
+            </WorkspaceSelect>
+          </Field>
+        </div>
       </CardHeader>
-      <CardContent className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-        <Field>
-          <FieldLabel>School</FieldLabel>
-          <WorkspaceSelect
-            ariaLabel="School"
-            disabled={isPending}
-            onValueChange={onSchoolChange}
-            placeholder="Select a school"
-            value={selectedSchoolId}
-          >
-            {schools.map((school) => (
-              <SelectItem key={school.id} value={school.id}>
-                {school.schoolName}
-              </SelectItem>
-            ))}
-          </WorkspaceSelect>
-        </Field>
+      <CardContent>
         <div className="text-sm text-muted-foreground">
           {isPending ? "Loading..." : `${schools.length} schools`}
         </div>
@@ -321,10 +324,12 @@ function PayslipDownloadCard({
 }
 
 export function PayslipWorkspace({ scope }: PayslipWorkspaceProps) {
-  const [selectedSchoolId, setSelectedSchoolId] = useState("");
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
-  const [selectedFinancialYear, setSelectedFinancialYear] = useState("");
-  const [selectedMonth, setSelectedMonth] = useState("");
+  const [selection, setSelection] = useState({
+    selectedSchoolId: "",
+    selectedEmployeeId: "",
+    selectedFinancialYear: "",
+    selectedMonth: "",
+  });
   const [downloadType, setDownloadType] = useState<DownloadType>("monthly");
 
   const { data: schoolsData, error: schoolsError, isPending: isSchoolsPending } =
@@ -334,7 +339,7 @@ export function PayslipWorkspace({ scope }: PayslipWorkspaceProps) {
       enabled: scope === "admin",
     });
 
-  const contextSchoolId = scope === "admin" ? selectedSchoolId : undefined;
+  const contextSchoolId = scope === "admin" ? selection.selectedSchoolId : undefined;
 
   const {
     data: payrollContext,
@@ -351,20 +356,22 @@ export function PayslipWorkspace({ scope }: PayslipWorkspaceProps) {
       return "";
     }
 
-    return payrollContext.employees.some((employee) => employee.id === selectedEmployeeId)
-      ? selectedEmployeeId
+    return payrollContext.employees.some(
+      (employee) => employee.id === selection.selectedEmployeeId,
+    )
+      ? selection.selectedEmployeeId
       : "";
-  }, [payrollContext, selectedEmployeeId]);
+  }, [payrollContext, selection.selectedEmployeeId]);
 
   const effectiveFinancialYear = useMemo(() => {
     if (!payrollContext) {
       return "";
     }
 
-    return payrollContext.financialYears.includes(selectedFinancialYear)
-      ? selectedFinancialYear
+    return payrollContext.financialYears.includes(selection.selectedFinancialYear)
+      ? selection.selectedFinancialYear
       : "";
-  }, [payrollContext, selectedFinancialYear]);
+  }, [payrollContext, selection.selectedFinancialYear]);
 
   const {
     data: ledgerData,
@@ -418,14 +425,14 @@ export function PayslipWorkspace({ scope }: PayslipWorkspaceProps) {
 
   const selectedMonthlyRow = useMemo(
     () =>
-      monthlyRows.find((row) => String(row.rowMonth) === selectedMonth) ?? null,
-    [monthlyRows, selectedMonth],
+      monthlyRows.find((row) => String(row.rowMonth) === selection.selectedMonth) ?? null,
+    [monthlyRows, selection.selectedMonth],
   );
 
   const effectiveSelectedMonth = monthOptions.some(
-    (month) => month.value === selectedMonth,
+    (month) => month.value === selection.selectedMonth,
   )
-    ? selectedMonth
+    ? selection.selectedMonth
     : "";
 
   const monthError =
@@ -494,24 +501,26 @@ export function PayslipWorkspace({ scope }: PayslipWorkspaceProps) {
               title="Unable to Load Schools"
             />
           ) : (
-            <AdminSchoolPicker
+          <AdminSchoolPicker
               isPending={isSchoolsPending}
               onSchoolChange={(value) => {
-                setSelectedSchoolId(value);
-                setSelectedEmployeeId("");
-                setSelectedFinancialYear("");
-                setSelectedMonth("");
+                setSelection({
+                  selectedSchoolId: value,
+                  selectedEmployeeId: "",
+                  selectedFinancialYear: "",
+                  selectedMonth: "",
+                });
               }}
               schools={schoolsData?.schools ?? []}
-              selectedSchoolId={selectedSchoolId}
+              selectedSchoolId={selection.selectedSchoolId}
             />
           )}
 
-          {!selectedSchoolId ? <PayslipSelectionEmptyState /> : null}
+          {!selection.selectedSchoolId ? <PayslipSelectionEmptyState /> : null}
         </>
       ) : null}
 
-      {(scope === "school" || selectedSchoolId) && isPayrollContextPending ? (
+      {(scope === "school" || selection.selectedSchoolId) && isPayrollContextPending ? (
         <PayslipLoadingState />
       ) : null}
 
@@ -542,18 +551,26 @@ export function PayslipWorkspace({ scope }: PayslipWorkspaceProps) {
             onDownloadTypeChange={(value) => {
               setDownloadType(value);
               if (value === "annual") {
-                setSelectedMonth("");
+                setSelection((current) => ({ ...current, selectedMonth: "" }));
               }
             }}
             onEmployeeChange={(value) => {
-              setSelectedEmployeeId(value);
-              setSelectedMonth("");
+              setSelection((current) => ({
+                ...current,
+                selectedEmployeeId: value,
+                selectedMonth: "",
+              }));
             }}
             onFinancialYearChange={(value) => {
-              setSelectedFinancialYear(value);
-              setSelectedMonth("");
+              setSelection((current) => ({
+                ...current,
+                selectedFinancialYear: value,
+                selectedMonth: "",
+              }));
             }}
-            onMonthChange={setSelectedMonth}
+            onMonthChange={(value) => {
+              setSelection((current) => ({ ...current, selectedMonth: value }));
+            }}
             schoolName={payrollContext.school.schoolName}
             selectedEmployee={selectedEmployee}
             selectedEmployeeId={effectiveEmployeeId}

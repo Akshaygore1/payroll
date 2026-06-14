@@ -10,6 +10,7 @@ import {
   CardAction,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -23,7 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   getPayrollContextQuery,
@@ -149,29 +149,32 @@ function AdminSchoolPicker({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-display text-lg font-bold mt-2">
-          Select School
-        </CardTitle>
-        <CardDescription>
-          Choose a school to manage its payroll records.
-        </CardDescription>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <CardTitle className="font-display text-lg font-bold">
+              Select School
+            </CardTitle>
+            <CardDescription>
+              Choose a school to manage its payroll records.
+            </CardDescription>
+          </div>
+          <Field className="w-fit shrink-0">
+            <PayrollSelect
+              disabled={isPending}
+              onValueChange={onSchoolChange}
+              placeholder="Select a school"
+              value={selectedSchoolId}
+            >
+              {schools.map((school) => (
+                <SelectItem key={school.id} value={school.id}>
+                  {school.schoolName}
+                </SelectItem>
+              ))}
+            </PayrollSelect>
+          </Field>
+        </div>
       </CardHeader>
-      <CardContent className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-        <Field>
-          <FieldLabel>School</FieldLabel>
-          <PayrollSelect
-            disabled={isPending}
-            onValueChange={onSchoolChange}
-            placeholder="Select a school"
-            value={selectedSchoolId}
-          >
-            {schools.map((school) => (
-              <SelectItem key={school.id} value={school.id}>
-                {school.schoolName}
-              </SelectItem>
-            ))}
-          </PayrollSelect>
-        </Field>
+      <CardContent>
         <div className="text-sm text-muted-foreground">
           {isPending ? "Loading..." : `${schools.length} schools`}
         </div>
@@ -233,19 +236,37 @@ function PayrollSchoolSummary({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-display text-lg font-bold mt-2">
-          {payrollSchool.schoolName}
-        </CardTitle>
-        <CardDescription>
-          Annual payroll ledger and statement setup for the selected school.
-        </CardDescription>
-        <CardAction>
-          <Button onClick={onSaveSettings} size="sm" variant="outline">
-            Save Settings
-          </Button>
-        </CardAction>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <CardTitle className="font-display text-lg font-bold">
+              {payrollSchool.schoolName}
+            </CardTitle>
+            <CardDescription>
+              Annual payroll ledger and statement setup for the selected school.
+            </CardDescription>
+          </div>
+          <div className="flex items-end gap-2">
+            <Field className="w-fit shrink-0">
+              <FieldLabel>Statement Start Month</FieldLabel>
+              <PayrollSelect
+                onValueChange={onStatementMonthChange}
+                placeholder="Select month"
+                value={String(statementStartMonth)}
+              >
+                {statementMonthOptions.map((month) => (
+                  <SelectItem key={month.value} value={String(month.value)}>
+                    {month.label}
+                  </SelectItem>
+                ))}
+              </PayrollSelect>
+            </Field>
+            <Button onClick={onSaveSettings} size="sm" variant="outline">
+              Save Settings
+            </Button>
+          </div>
+        </div>
       </CardHeader>
-      <CardContent className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <CardContent>
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
@@ -267,23 +288,7 @@ function PayrollSchoolSummary({
             </span>
             <div className="mt-0.5 text-sm">{payrollSchool.address}</div>
           </div>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field>
-            <FieldLabel>Statement Start Month</FieldLabel>
-            <PayrollSelect
-              onValueChange={onStatementMonthChange}
-              placeholder="Select month"
-              value={String(statementStartMonth)}
-            >
-              {statementMonthOptions.map((month) => (
-                <SelectItem key={month.value} value={String(month.value)}>
-                  {month.label}
-                </SelectItem>
-              ))}
-            </PayrollSelect>
-          </Field>
-          <div className="flex flex-col justify-end pb-2">
+          <div className="sm:col-span-2">
             <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
               Employees
             </span>
@@ -411,37 +416,55 @@ function PayrollMonthlySummaryCards({
 
 function PayrollMonthlyActionsCard({
   activePanel,
+  monthOptions,
+  onMonthChange,
   onPanelChange,
+  selectedMonth,
 }: {
   activePanel: "fill" | "download" | null;
+  monthOptions: PayrollMonthOption[];
+  onMonthChange: (value: string) => void;
   onPanelChange: (panel: "fill" | "download") => void;
+  selectedMonth: string;
 }) {
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
         <CardTitle className="font-display text-lg font-bold mt-2">
           Payroll Actions
         </CardTitle>
         <CardDescription>
-          Fill monthly payroll entries or download payslips.
+          Select a month, then fill entries or download payslips.
         </CardDescription>
-        <CardAction className="flex flex-wrap gap-2">
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <Field>
+          <FieldLabel>Payroll Month</FieldLabel>
+          <PayrollSelect
+            disabled={!monthOptions.length}
+            onValueChange={onMonthChange}
+            placeholder="Select month"
+            value={selectedMonth}
+          >
+            {monthOptions.map((month) => (
+              <SelectItem key={month.value} value={month.value}>
+                {month.label}
+              </SelectItem>
+            ))}
+          </PayrollSelect>
+        </Field>
+        <div className="flex flex-col gap-2">
           <Button
+            disabled={!selectedMonth}
             onClick={() => onPanelChange("fill")}
             size="sm"
             variant={activePanel === "fill" ? "default" : "outline"}
+            className="w-full"
           >
             Fill Monthly Payroll
           </Button>
-          <Button
-            onClick={() => onPanelChange("download")}
-            size="sm"
-            variant={activePanel === "download" ? "default" : "outline"}
-          >
-            Download Payslip
-          </Button>
-        </CardAction>
-      </CardHeader>
+        </div>
+      </CardContent>
     </Card>
   );
 }
@@ -479,97 +502,131 @@ function PayrollMonthlyFillPanel({
         <CardDescription>
           Select a month, enter earnings and deductions, then save.
         </CardDescription>
+        <CardAction>
+          <PayrollSelect
+            disabled={!monthOptions.length}
+            onValueChange={onMonthChange}
+            placeholder="Select month"
+            value={selectedMonth}
+          >
+            {monthOptions.map((month) => (
+              <SelectItem key={month.value} value={month.value}>
+                {month.label}
+              </SelectItem>
+            ))}
+          </PayrollSelect>
+        </CardAction>
       </CardHeader>
-      <CardContent>
-        <FieldGroup className="gap-6">
-          <Field>
-            <FieldLabel>Select Month</FieldLabel>
-            <PayrollSelect
-              disabled={!monthOptions.length}
-              onValueChange={onMonthChange}
-              placeholder="Select month"
-              value={selectedMonth}
-            >
-              {monthOptions.map((month) => (
-                <SelectItem key={month.value} value={month.value}>
-                  {month.label}
-                </SelectItem>
-              ))}
-            </PayrollSelect>
-          </Field>
 
-          {selectedMonthlyRow ? (
-            <>
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                {summaryColumns.map((key) => (
-                  <SummaryCard
+      {selectedMonthlyRow ? (
+        <CardContent className="flex flex-col gap-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div className="flex flex-col gap-4 border border-border-card px-4 py-3 animate-fade-in-up-delay-2">
+              <div className="text-xs font-semibold tracking-wider uppercase text-muted-foreground border-b pb-1">
+                Earnings
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <PayrollAmountInput
+                  fieldKey="basicPay"
+                  onChange={onRowChange}
+                  row={selectedMonthlyRow}
+                />
+                {earningFieldKeys.map((key) => (
+                  <PayrollAmountInput
+                    fieldKey={key}
                     key={key}
-                    label={payrollColumnLabels[key]}
-                    value={selectedMonthlyRow[key]}
+                    onChange={onRowChange}
+                    row={selectedMonthlyRow}
                   />
                 ))}
               </div>
-
-              <div className="grid gap-8 lg:grid-cols-2">
-                <FieldGroup className="gap-4 sm:grid sm:grid-cols-2">
-                  <div className="text-xs font-semibold tracking-wider uppercase text-muted-foreground border-b pb-1 sm:col-span-2">
-                    Earnings
-                  </div>
-                  <PayrollAmountInput
-                    fieldKey="basicPay"
-                    onChange={onRowChange}
-                    row={selectedMonthlyRow}
-                  />
-                  {earningFieldKeys.map((key) => (
-                    <PayrollAmountInput
-                      fieldKey={key}
-                      key={key}
-                      onChange={onRowChange}
-                      row={selectedMonthlyRow}
-                    />
-                  ))}
-                </FieldGroup>
-
-                <FieldGroup className="gap-4 sm:grid sm:grid-cols-2">
-                  <div className="text-xs font-semibold tracking-wider uppercase text-muted-foreground border-b pb-1 sm:col-span-2">
-                    Deductions
-                  </div>
-                  <PayrollAmountInput
-                    fieldKey="recovery"
-                    onChange={onRowChange}
-                    row={selectedMonthlyRow}
-                  />
-                  {deductionFieldKeys.map((key) => (
-                    <PayrollAmountInput
-                      fieldKey={key}
-                      key={key}
-                      onChange={onRowChange}
-                      row={selectedMonthlyRow}
-                    />
-                  ))}
-                </FieldGroup>
-              </div>
-            </>
-          ) : null}
-
-          <Separator />
-
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              {saveMessage ? (
-                <span className="text-sm text-muted-foreground">
-                  {saveMessage}
-                </span>
-              ) : null}
-              {saveError ? (
-                <span className="text-sm text-destructive">{saveError}</span>
-              ) : null}
             </div>
-            <Button disabled={isSaving || !selectedMonthlyRow} onClick={onSave} size="sm">
-              {isSaving ? "Saving..." : "Save Month"}
-            </Button>
+
+            <div className="flex flex-col gap-4 border border-border-card px-4 py-3 animate-fade-in-up-delay-3">
+              <div className="text-xs font-semibold tracking-wider uppercase text-muted-foreground border-b pb-1">
+                Deductions
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <PayrollAmountInput
+                  fieldKey="recovery"
+                  onChange={onRowChange}
+                  row={selectedMonthlyRow}
+                />
+                {deductionFieldKeys.map((key) => (
+                  <PayrollAmountInput
+                    fieldKey={key}
+                    key={key}
+                    onChange={onRowChange}
+                    row={selectedMonthlyRow}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
-        </FieldGroup>
+        </CardContent>
+      ) : null}
+
+      <CardFooter className="justify-between">
+        <div className="flex items-center gap-3">
+          {saveMessage ? (
+            <span className="text-sm text-muted-foreground">{saveMessage}</span>
+          ) : null}
+          {saveError ? (
+            <span className="text-sm text-destructive">{saveError}</span>
+          ) : null}
+        </div>
+        <Button
+          disabled={isSaving || !selectedMonthlyRow}
+          onClick={onSave}
+          size="sm"
+        >
+          {isSaving ? "Saving..." : "Save Month"}
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+function SelectedMonthOverview({
+  row,
+  monthLabel,
+}: {
+  row: PayrollLedgerRowRecord;
+  monthLabel: string;
+}) {
+  const stats = [
+    { label: "Net Salary", value: row.netSalary },
+    { label: "Total Earnings", value: row.totalEarnings },
+    { label: "Total Deduction", value: row.totalDeduction },
+    { label: "Basic Pay", value: row.basicPay },
+  ] as const;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-display text-lg font-bold mt-2">
+          {monthLabel}
+        </CardTitle>
+        <CardDescription>
+          Monthly earnings and deductions overview.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 gap-3">
+          {stats.map((stat) => (
+            <div
+              key={stat.label}
+              className="border border-border-card px-3 py-2"
+            >
+              <div className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
+                {stat.label}
+              </div>
+              <div className="mt-1 font-mono text-lg font-semibold">
+                {stat.value}
+              </div>
+            </div>
+          ))}
+        </div>
       </CardContent>
     </Card>
   );
@@ -636,7 +693,10 @@ function PayrollMonthlyDownloadPanel({
             >
               Download Monthly
             </Button>
-            <Button disabled={!rows.length} onClick={() => onDownloadAnnual(rows)}>
+            <Button
+              disabled={!rows.length}
+              onClick={() => onDownloadAnnual(rows)}
+            >
               Download Annual
             </Button>
           </div>
@@ -718,9 +778,6 @@ function PayrollMonthlyWorkspace({
     setSaveMessage(null);
   }
 
-  const selectedMonthLabel =
-    monthOptions.find((month) => month.value === selectedMonth)?.label ?? "";
-
   function handleSave() {
     onSave(rows);
     setSaveMessage("Saving...");
@@ -743,16 +800,42 @@ function PayrollMonthlyWorkspace({
     updateRow(selectedMonthlyRow.rowMonth, field, value);
   }
 
+  const selectedMonthLabel =
+    monthOptions.find((m) => m.value === selectedMonth)?.label ?? "";
+
   return (
-    <>
-      <PayrollMonthlySummaryCards rows={rows} />
+    <div className="flex flex-col gap-6">
+      {/* <PayrollMonthlySummaryCards rows={rows} /> */}
 
-      <PayrollMonthlyActionsCard
-        activePanel={activePanel}
-        onPanelChange={handlePanelChange}
-      />
+      <div className="grid gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
+        <PayrollMonthlyActionsCard
+          activePanel={activePanel}
+          monthOptions={monthOptions}
+          onMonthChange={setSelectedMonth}
+          onPanelChange={handlePanelChange}
+          selectedMonth={selectedMonth}
+        />
 
-      {isLoading ? <Skeleton className="h-96" /> : null}
+        {selectedMonthlyRow ? (
+          <SelectedMonthOverview
+            monthLabel={selectedMonthLabel}
+            row={selectedMonthlyRow}
+          />
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-display text-lg font-bold mt-2">
+                Month Overview
+              </CardTitle>
+              <CardDescription>
+                Select a month from the Payroll Actions panel to view its
+                summary.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        )}
+      </div>
+
       {loadError ? (
         <Card>
           <CardHeader>
@@ -790,7 +873,7 @@ function PayrollMonthlyWorkspace({
           selectedMonthlyRow={selectedMonthlyRow}
         />
       ) : null}
-    </>
+    </div>
   );
 }
 
@@ -852,9 +935,7 @@ function PayrollWorkspaceContent({
   effectiveEmployeeId: string;
   effectiveFinancialYear: string;
   isLedgerPending: boolean;
-  ledgerData:
-    | Awaited<ReturnType<typeof getPayrollLedgerQuery>>
-    | undefined;
+  ledgerData: Awaited<ReturnType<typeof getPayrollLedgerQuery>> | undefined;
   ledgerEditorKey: string;
   ledgerError?: Error | null;
   onDownloadAnnual: (rows: PayrollLedgerRowRecord[]) => Promise<void>;
@@ -1174,7 +1255,9 @@ export function PayrollWorkspace({ scope }: PayrollWorkspaceProps) {
           onEmployeeChange={setSelectedEmployeeId}
           onFinancialYearChange={setSelectedFinancialYear}
           onSaveRows={saveLedgerMutation.mutate}
-          onSaveSettings={() => saveSettingsMutation.mutate(statementStartMonth)}
+          onSaveSettings={() =>
+            saveSettingsMutation.mutate(statementStartMonth)
+          }
           onStatementMonthChange={(value) =>
             setStatementStartMonthDraft({
               schoolId: payrollContext.school.id,

@@ -43,6 +43,21 @@ export type PayrollEmployeeOption = {
   contactNumber: string;
 };
 
+export type SchoolPayrollLedgerExportRow = {
+  id: string;
+  schoolId: string;
+  employeeId: string;
+  employeeName: string;
+  employeePanNumber: string;
+  financialYear: string;
+  rowType: "month" | "extra";
+  rowMonth: number | null;
+  rowLabel: string;
+  displayOrder: number;
+  incomeTax: number;
+  grandTotal: number;
+};
+
 type PayrollRowRecord = {
   id: string;
   schoolId: string;
@@ -277,6 +292,75 @@ export async function listPayrollLedger(
     .orderBy(asc(schoolPayrollEntry.displayOrder));
 
   return rows.map(mapPayrollRow) satisfies PayrollLedgerRow[];
+}
+
+export async function listSchoolPayrollLedgerForFinancialYear(
+  schoolId: string,
+  financialYear: string,
+) {
+  const db = getDb();
+  const rows = await db
+    .select({
+      id: schoolPayrollEntry.id,
+      schoolId: schoolPayrollEntry.schoolId,
+      employeeId: schoolPayrollEntry.employeeId,
+      employeeName: schoolEmployee.fullName,
+      employeePanNumber: schoolEmployee.panNumber,
+      financialYear: schoolPayrollEntry.financialYear,
+      rowType: schoolPayrollEntry.rowType,
+      rowMonth: schoolPayrollEntry.rowMonth,
+      rowLabel: schoolPayrollEntry.rowLabel,
+      displayOrder: schoolPayrollEntry.displayOrder,
+      totalPay: schoolPayrollEntry.totalPay,
+      da: schoolPayrollEntry.da,
+      daDifferenceArrears: schoolPayrollEntry.daDifferenceArrears,
+      hra: schoolPayrollEntry.hra,
+      cla: schoolPayrollEntry.cla,
+      vaTaArrear: schoolPayrollEntry.vaTaArrear,
+      recovery: schoolPayrollEntry.recovery,
+      incomeTax: schoolPayrollEntry.incomeTax,
+    })
+    .from(schoolPayrollEntry)
+    .innerJoin(
+      schoolEmployee,
+      eq(schoolEmployee.id, schoolPayrollEntry.employeeId),
+    )
+    .where(
+      and(
+        eq(schoolPayrollEntry.schoolId, schoolId),
+        eq(schoolPayrollEntry.financialYear, financialYear),
+      ),
+    )
+    .orderBy(
+      asc(schoolPayrollEntry.displayOrder),
+      asc(schoolEmployee.fullName),
+      asc(schoolPayrollEntry.id),
+    );
+
+  return rows.map((row) => ({
+    id: row.id,
+    schoolId: row.schoolId,
+    employeeId: row.employeeId,
+    employeeName: row.employeeName,
+    employeePanNumber: row.employeePanNumber,
+    financialYear: row.financialYear,
+    rowType: row.rowType,
+    rowMonth: row.rowMonth,
+    rowLabel: row.rowLabel,
+    displayOrder: row.displayOrder,
+    incomeTax: row.incomeTax,
+    grandTotal: calculateDerivedPayrollFields({
+      ...createEmptyPayrollAmountFields(),
+      totalPay: row.totalPay,
+      da: row.da,
+      daDifferenceArrears: row.daDifferenceArrears,
+      hra: row.hra,
+      cla: row.cla,
+      vaTaArrear: row.vaTaArrear,
+      recovery: row.recovery,
+      incomeTax: row.incomeTax,
+    }).grandTotal,
+  })) satisfies SchoolPayrollLedgerExportRow[];
 }
 
 export async function savePayrollLedger(

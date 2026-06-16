@@ -60,7 +60,7 @@ afterEach(() => {
 });
 
 describe("AppSidebar", () => {
-  it("links the admin payroll and payslip nav entries to their routes", () => {
+  it("links the admin payroll, payslip, and challans nav entries to their routes", () => {
     mockUsePathname.mockReturnValue("/payslip");
 
     render(
@@ -76,6 +76,10 @@ describe("AppSidebar", () => {
     expect(screen.getByRole("link", { name: "Payslip" })).toHaveAttribute(
       "href",
       "/payslip",
+    );
+    expect(screen.getByRole("link", { name: "Challans" })).toHaveAttribute(
+      "href",
+      "/challans",
     );
   });
 

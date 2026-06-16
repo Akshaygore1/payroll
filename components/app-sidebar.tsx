@@ -30,6 +30,7 @@ const adminItems = [
   { title: "Schools", url: "/schools", icon: School01Icon },
   { title: "Payroll", url: "/payroll", icon: Invoice03Icon },
   { title: "Payslip", url: "/payslip", icon: Invoice03Icon },
+  { title: "Challans", url: "/challans", icon: Invoice03Icon },
 ];
 
 const schoolItems = [
